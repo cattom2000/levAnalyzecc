@@ -1,50 +1,93 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+同步影响报告:
+- 版本变更: 0.0.0 → 1.0.0 (初始版本创建)
+- 新增原则: 5个核心原则 (数据准确性、量化分析驱动、风险识别优先、实时数据更新、可视化与可解释性)
+- 新增章节: 技术要求、开发工作流程、治理
+- 模板更新状态:
+  ✅ plan-template.md - 已更新为数据分析项目结构，添加金融分析特定检查项
+  ✅ spec-template.md - 已更新功能需求和成功标准，定义金融数据关键实体
+  ✅ tasks-template.md - 已更新为金融分析任务流程，包含数据质量测试
+- 后续TODO: 无重要占位符遗留，所有章节已完整定义
+-->
 
-## Core Principles
+# 融资余额市场分析系统 (levAnalyzecc) 宪法
+<!-- Margin Debt Market Analysis System Constitution -->
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+## 核心原则
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### 数据准确性与可追溯性
+所有数据源必须有明确的来源标识、获取时间和验证机制。数据质量检查是任何分析功能的前置条件。每个分析结果都必须能够追溯到原始数据和处理步骤。
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### 量化分析驱动
+所有结论必须基于量化数据分析，避免主观臆断。使用统计显著性检验来验证假设。分析模型必须有明确的理论基础和实证支持。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### 风险识别优先
+系统设计优先考虑风险信号的识别和预警。风险评估必须有明确的阈值和触发条件。所有投资建议都必须包含风险提示和不确定性评估。
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### 实时数据更新
+市场数据和分析结果必须保持实时性。数据更新频率必须满足投资决策需求。系统必须能够处理实时数据流的异常情况。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### 可视化与可解释性
+复杂的金融关系必须通过直观的可视化展示。所有分析模型都必须提供可解释的输出。用户能够理解每个结论的生成逻辑。
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## 技术要求
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### 数据源与集成
+- **数据源要求**: 必须使用权威金融数据提供商（如FRED、Yahoo Finance、Quandl等）
+- **数据频率**: 支持日度、周度、月度等不同频率数据
+- **数据格式**: 统一使用时间序列格式，确保时间戳一致性
+- **数据验证**: 实现自动化数据质量检查和异常值检测
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### 分析引擎
+- **统计分析**: 支持相关性分析、回归分析、时间序列分析
+- **风险指标**: 实现VaR、最大回撤、波动率等风险指标计算
+- **信号生成**: 基于量化模型生成买卖信号和风险预警
+- **回测系统**: 所有策略必须经过历史数据回测验证
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+### 性能标准
+- **数据处理**: 能够处理10年以上历史数据
+- **查询响应**: 分析查询响应时间小于5秒
+- **并发支持**: 支持多用户同时使用
+- **准确性**: 数值计算精度达到小数点后6位
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+## 开发工作流程
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### 分析模型开发
+- 所有新分析模型必须经过理论基础评审
+- 模型实现前必须编写详细的算法文档
+- 模型必须使用样本外数据进行验证
+- 实现后必须进行敏感性分析和鲁棒性测试
+
+### 数据管道管理
+- 数据获取、清洗、存储必须有完整的日志记录
+- 数据版本控制确保分析结果的可重现性
+- 数据管道故障必须有自动恢复机制
+- 定期进行数据质量审计
+
+### 代码质量标准
+- Python代码遵循PEP 8规范
+- 所有函数必须有完整的文档字符串
+- 关键算法必须有单元测试覆盖
+- 数值计算结果必须有精度测试
+
+## 治理
+
+### 合规性要求
+- 所有分析结果必须包含明确的免责声明
+- 数据使用必须遵守相关数据提供商的条款
+- 系统必须记录所有分析操作的审计日志
+- 定期进行系统安全评估
+
+### 修订管理
+- 对分析模型的重大修改必须经过评审
+- 参数调整必须记录调整理由和影响评估
+- 所有修订都必须保持向后兼容性或提供迁移路径
+- 定期评估和更新风险阈值
+
+### 质量保证
+- 每个分析功能都必须有对应的验证测试
+- 生产环境部署前必须经过完整的集成测试
+- 建立分析结果的交叉验证机制
+- 用户反馈必须及时响应并记录处理过程
+
+**版本**: 1.0.0 | **制定**: 2025-01-10 | **最后修订**: 2025-01-10
