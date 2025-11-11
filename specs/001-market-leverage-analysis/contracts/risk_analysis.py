@@ -14,11 +14,12 @@ import numpy as np
 # ============================================================================
 
 class LeverageMetrics(NamedTuple):
-    """杠杆指标数据结构"""
-    market_leverage_ratio: float      # 市场杠杆率
-    margin_money_supply_ratio: float # 货币供应比率
-    leverage_growth_yoy: float        # 杠杆年增长率
-    investor_net_worth: float         # 投资者净资产
+    """杠杆指标数据结构 (基于calMethod.md更新)"""
+    market_leverage_ratio: float           # 市场杠杆率 = Margin Debt / S&P 500 总市值
+    margin_money_supply_ratio: float      # 货币供应比率 = Margin Debt / M2
+    leverage_change_pct_yoy: float        # 杠杆净值年同比变化率
+    leverage_net: float                   # 杠杆净值 = D - (CC + CM)
+    investor_net_worth: float             # 投资者净资产 = leverage_net
 
 class ZScoreMetrics(NamedTuple):
     """Z-score指标数据结构"""
@@ -51,19 +52,19 @@ class BasicMetricsCalculatorInterface(ABC):
 
     @abstractmethod
     def calculate_leverage_ratio(self,
-                                 margin_debt: float,
+                                 debit_balances: float,
                                  sp500_market_cap: float) -> float:
         """
         计算市场杠杆率
 
-        Formula: market_leverage_ratio = margin_debt / sp500_market_cap
+        Formula: market_leverage_ratio = debit_balances / sp500_market_cap
 
         Args:
-            margin_debt: 融资余额 (十亿)
-            sp500_market_cap: S&P 500总市值 (万亿)
+            debit_balances: 客户保证金账户借方余额 (D) - Margin Debt
+            sp500_market_cap: S&P 500总市值
 
         Returns:
-            float: 市场杠杆率
+            float: 市场杠杆率 = Margin Debt / S&P 500 总市值
 
         Raises:
             ValueError: 当输入参数无效时
@@ -72,55 +73,72 @@ class BasicMetricsCalculatorInterface(ABC):
 
     @abstractmethod
     def calculate_money_supply_ratio(self,
-                                    margin_debt: float,
+                                    debit_balances: float,
                                     m2_supply: float) -> float:
         """
         计算货币供应比率
 
-        Formula: margin_money_supply_ratio = margin_debt / m2_supply
+        Formula: margin_money_supply_ratio = debit_balances / m2_supply
 
         Args:
-            margin_debt: 融资余额 (十亿)
-            m2_supply: M2货币供应量 (万亿)
+            debit_balances: 客户保证金账户借方余额 (D) - Margin Debt
+            m2_supply: M2货币供应量
 
         Returns:
-            float: 货币供应比率
+            float: 货币供应比率 = Margin Debt / M2
         """
         pass
 
     @abstractmethod
-    def calculate_leverage_growth_yoy(self,
-                                     current_margin: float,
-                                     previous_year_margin: float) -> float:
+    def calculate_leverage_change_pct_yoy(self,
+                                         current_leverage_net: float,
+                                         previous_year_leverage_net: float) -> float:
         """
-        计算杠杆年同比增长率
+        计算杠杆净值年同比变化率
 
-        Formula: leverage_growth_yoy = ((current_margin / previous_year_margin) - 1) * 100
+        Formula: leverage_change_pct_yoy = ((current_leverage_net / previous_year_leverage_net) - 1) * 100
 
         Args:
-            current_margin: 当前融资余额
-            previous_year_margin: 去年同月融资余额
+            current_leverage_net: 当前杠杆净值 (D - (CC + CM))
+            previous_year_leverage_net: 去年同月杠杆净值
 
         Returns:
-            float: 年同比增长率 (%)
+            float: 杠杆净值年同比变化率 (%)
         """
         pass
 
     @abstractmethod
-    def calculate_investor_net_worth(self,
-                                   free_credit: float,
-                                   margin_debt: float) -> float:
+    def calculate_leverage_net(self,
+                              debit_balances: float,
+                              free_credit_cash: float,
+                              free_credit_margin: float) -> float:
+        """
+        计算杠杆净值
+
+        Formula: leverage_net = debit_balances - (free_credit_cash + free_credit_margin)
+
+        Args:
+            debit_balances: 客户保证金账户借方余额 (D)
+            free_credit_cash: 客户现金账户贷方余额 (CC)
+            free_credit_margin: 客户保证金账户贷方余额 (CM)
+
+        Returns:
+            float: 杠杆净值 = D - (CC + CM)
+        """
+        pass
+
+    @abstractmethod
+    def calculate_investor_net_worth(self, leverage_net: float) -> float:
         """
         计算投资者净资产
 
-        Formula: investor_net_worth = free_credit - margin_debt
+        Formula: investor_net_worth = leverage_net
 
         Args:
-            free_credit: 自由信贷余额
-            margin_debt: 融资借方余额
+            leverage_net: 杠杆净值
 
         Returns:
-            float: 投资者净资产
+            float: 投资者净资产 = 杠杆净值 (市场缓冲垫)
         """
         pass
 
@@ -182,7 +200,7 @@ class ZScoreCalculatorInterface(ABC):
                                 leverage_zscore: float,
                                 vix_zscore: float) -> float:
         """
-        计算脆弱性指数 (核心指标)
+        计算脆弱性指数 (核心指标) - 基于docs/sig_Bubbles.md
 
         Formula: fragility_index = leverage_zscore - vix_zscore
 
@@ -193,11 +211,12 @@ class ZScoreCalculatorInterface(ABC):
         Returns:
             float: 脆弱性指数
 
-        Interpretation:
-        - fragility_index > 3: 高度脆弱，风险极大
-        - fragility_index > 1: 脆弱性增加，需要关注
-        - fragility_index > 0: 轻微脆弱性
-        - fragility_index <= 0: 相对稳定
+        Interpretation (基于sig_Bubbles.md):
+        - fragility_index > 3: 市场过热、泡沫风险 - 杠杆高且波动率低
+        - fragility_index < -3: 市场极度恐慌、可能见底
+        - fragility_index -1 ~ +1: 市场风险中性，结构健康
+        - 杠杆Z ↑ + VIXZ ↓: 投资者借钱买入、无人买保险 = 泡沫/自满期
+        - 杠杆Z ↓ + VIXZ ↑: 投资者降杠杆、购买期权对冲 = 恐慌/去杠杆期
         """
         pass
 

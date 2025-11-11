@@ -69,19 +69,18 @@ class FINRADataSourceInterface(DataSourceInterface):
         """
         获取融资余额统计数据
 
-        Expected Columns:
-        - date: 日期
-        - debit_balance: 借方余额 (十亿)
-        - credit_balance: 贷方余额 (十亿)
-        - free_credit_balance: 自由信贷余额 (十亿)
-        - net_margin_debt: 净融资余额 (十亿)
+        Expected Columns (基于datas/margin-statistics.csv):
+        - date: 日期 (Year-Month格式)
+        - debit_balances_margin_accounts: 客户保证金账户借方余额 (D) - Margin Debt
+        - free_credit_balances_cash_accounts: 客户现金账户贷方余额 (CC)
+        - free_credit_balances_margin_accounts: 客户保证金账户贷方余额 (CM)
 
         Args:
-            start_date: 开始日期 (不早于1997-01)
+            start_date: 开始日期 (2010-02及以后)
             end_date: 结束日期
 
         Returns:
-            pd.DataFrame: 月度融资余额数据
+            pd.DataFrame: 月度融资余额数据 (从datas/margin-statistics.csv加载)
         """
         pass
 
@@ -213,7 +212,7 @@ class CBOEDataSourceInterface(DataSourceInterface):
         """
         获取VIX波动率数据
 
-        Expected Columns:
+        Expected Columns (基于docs/dataSourceExplain.md手动下载):
         - date: 日期
         - vix_close: VIX收盘价
 
@@ -222,7 +221,11 @@ class CBOEDataSourceInterface(DataSourceInterface):
             end_date: 结束日期
 
         Returns:
-            pd.DataFrame: 日度VIX数据
+            pd.DataFrame: 日度VIX数据 (需要手动从CBOE网站下载)
+
+        Note:
+            数据来源: https://www.cboe.com/tradable_products/vix/vix_historical_data/
+            需要手动下载VIX_History.csv文件并转换为月度数据
         """
         pass
 

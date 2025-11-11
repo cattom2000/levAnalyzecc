@@ -27,19 +27,19 @@ CREATE TABLE complete_market_analysis_monthly (
     -- 货币供应数据 (FRED)
     m2_money_supply DECIMAL(15,2),           -- M2货币供应量 (万亿)
 
-    -- 融资余额数据 (FINRA)
-    margin_debit_balance DECIMAL(12,2),      -- 融资借方余额 (十亿)
-    margin_credit_balance DECIMAL(12,2),     -- 融资贷方余额 (十亿)
-    free_credit_balance DECIMAL(12,2),       -- 自由信贷余额 (十亿)
-    net_margin_debt DECIMAL(12,2),           -- 净融资余额 (十亿)
+    -- 融资余额数据 (FINRA) - 基于margin-statistics.csv字段
+    debit_balances_margin_accounts DECIMAL(12,2),  -- 客户保证金账户借方余额 (Margin Debt)
+    free_credit_balances_cash_accounts DECIMAL(12,2),  -- 客户现金账户贷方余额 (CC)
+    free_credit_balances_margin_accounts DECIMAL(12,2),  -- 客户保证金账户贷方余额 (CM)
+    leverage_net DECIMAL(12,2),              -- 杠杆净值 = D - (CC + CM)
 
     -- === Part 1: 基础杠杆指标 (从1997-01开始) ===
     market_leverage_ratio DECIMAL(8,4),      -- 市场杠杆率 = margin_debt / sp500_market_cap
     margin_money_supply_ratio DECIMAL(8,4),  -- 货币供应比率 = margin_debt / m2_money_supply
 
     -- === Part 2: 高级风险指标 (从2010-02开始) ===
-    leverage_growth_yoy DECIMAL(6,2),        -- 杠杆年同比增长率 (%)
-    investor_net_worth DECIMAL(12,2),       -- 投资者净资产 = free_credit - margin_debit
+    leverage_change_pct_yoy DECIMAL(6,2),    -- 杠杆年同比变化率 (%)
+    investor_net_worth DECIMAL(12,2),       -- 投资者净资产 = leverage_net
     leverage_zscore DECIMAL(6,2),            -- 杠杆Z-score
     vix_zscore DECIMAL(6,2),                 -- VIX Z-score
     fragility_index DECIMAL(6,2),           -- 脆弱性指数 = leverage_zscore - vix_zscore
@@ -78,7 +78,7 @@ CREATE TABLE complete_market_analysis_monthly (
         sp500_close > 0 AND
         vix_close > 0 AND
         m2_money_supply > 0 AND
-        margin_debit_balance >= 0
+        debit_balances_margin_accounts >= 0
     )
 );
 ```
@@ -100,12 +100,12 @@ CREATE TABLE data_sources (
     notes TEXT                               -- 备注
 );
 
--- 初始化数据源记录
+-- 初始化数据源记录 (全部免费数据源)
 INSERT INTO data_sources VALUES
-('FINRA_MARGIN', 'FINRA Margin Statistics', 'FILE', 'MONTHLY', '1997-01-01', NULL, NULL, NULL, TRUE, 0.99, 'Pre-provided dataset with API backup'),
-('FRED_RATES', 'FRED Interest Rates', 'API', 'DAILY', '1954-01-01', NULL, 'https://api.stlouisfed.org/fred', NULL, TRUE, 0.95, 'Federal Reserve Economic Data'),
-('YAHOO_FINANCE', 'Yahoo Finance Market Data', 'API', 'DAILY', '1927-01-01', NULL, 'https://query1.finance.yahoo.com', NULL, TRUE, 0.90, 'Stock market data with rate limits'),
-('CBOE_VIX', 'CBOE VIX Index', 'API', 'DAILY', '1990-01-01', NULL, 'https://www.cboe.com', NULL, TRUE, 0.95, 'Volatility Index data');
+('FINRA_MARGIN', 'FINRA Margin Statistics', 'FILE', 'MONTHLY', '2010-02-01', NULL, NULL, NULL, TRUE, 0.99, 'Pre-provided dataset: datas/margin-statistics.csv'),
+('FRED_RATES', 'FRED Interest Rates', 'API', 'DAILY', '1954-01-01', NULL, 'https://fred.stlouisfed.org/', NULL, TRUE, 0.95, 'Federal Reserve Economic Data - Free API'),
+('YAHOO_FINANCE', 'Yahoo Finance Market Data', 'API', 'DAILY', '1927-01-01', NULL, 'https://finance.yahoo.com/', NULL, TRUE, 0.90, 'Stock market data - Free API'),
+('CBOE_VIX', 'CBOE VIX Index', 'FILE', 'DAILY', '1990-01-01', NULL, 'https://www.cboe.com/vix', NULL, TRUE, 0.95, 'Volatility Index - Manual download required');
 ```
 
 ### 3. 危机时期定义表 (crisis_periods)
@@ -139,27 +139,30 @@ INSERT INTO crisis_periods VALUES
 |--------|----------|------|------|--------|
 | sp500_close | DECIMAL(10,2) | 美元 | S&P 500收盘价 | Yahoo Finance |
 | sp500_market_cap | DECIMAL(15,2) | 万亿 | S&P 500总市值 | Yahoo Finance |
-| vix_close | DECIMAL(8,2) | 点数 | VIX波动率指数收盘价 | CBOE |
-| federal_funds_rate | DECIMAL(5,2) | % | 联邦基金利率 | FRED |
-| treasury_10y_rate | DECIMAL(5,2) | % | 10年期国债收益率 | FRED |
-| m2_money_supply | DECIMAL(15,2) | 万亿 | M2货币供应量 | FRED |
-| margin_debit_balance | DECIMAL(12,2) | 十亿 | 融资借方余额 | FINRA |
-| net_margin_debt | DECIMAL(12,2) | 十亿 | 净融资余额 | FINRA |
+| vix_close | DECIMAL(8,2) | 点数 | VIX波动率指数收盘价 | CBOE (Manual Download) |
+| federal_funds_rate | DECIMAL(5,2) | % | 联邦基金利率 | FRED (Free API) |
+| treasury_10y_rate | DECIMAL(5,2) | % | 10年期国债收益率 | FRED (Free API) |
+| m2_money_supply | DECIMAL(15,2) | 万亿 | M2货币供应量 | FRED (Free API) |
+| debit_balances_margin_accounts | DECIMAL(12,2) | 十亿 | 客户保证金账户借方余额 (Margin Debt) | datas/margin-statistics.csv |
+| free_credit_balances_cash_accounts | DECIMAL(12,2) | 十亿 | 客户现金账户贷方余额 (CC) | datas/margin-statistics.csv |
+| free_credit_balances_margin_accounts | DECIMAL(12,2) | 十亿 | 客户保证金账户贷方余额 (CM) | datas/margin-statistics.csv |
+| leverage_net | DECIMAL(12,2) | 十亿 | 杠杆净值 = D - (CC + CM) | 计算字段 |
 
 ### 计算指标字段
 
 | 字段名 | 数据类型 | 计算公式 | 说明 |
 |--------|----------|----------|------|
-| market_leverage_ratio | DECIMAL(8,4) | margin_debt / sp500_market_cap | 市场杠杆率 |
-| margin_money_supply_ratio | DECIMAL(8,4) | margin_debt / m2_money_supply | 货币供应比率 |
-| leverage_growth_yoy | DECIMAL(6,2) | ((margin_debt/prev_year_margin) - 1) * 100 | 杠杆年增长率 |
-| fragility_index | DECIMAL(6,2) | leverage_zscore - vix_zscore | 脆弱性指数 |
+| market_leverage_ratio | DECIMAL(8,4) | debit_balances_margin_accounts / sp500_market_cap | 市场杠杆率 = Margin Debt / S&P 500 总市值 |
+| margin_money_supply_ratio | DECIMAL(8,4) | debit_balances_margin_accounts / m2_money_supply | 货币供应比率 = Margin Debt / M2 |
+| leverage_change_pct_yoy | DECIMAL(6,2) | ((leverage_net/prev_year_leverage_net) - 1) * 100 | 杠杆净值年同比变化率 |
+| fragility_index | DECIMAL(6,2) | leverage_zscore - vix_zscore | 脆弱性指数 = 杠杆Z分数 - VIX Z分数 |
+| leverage_net | DECIMAL(12,2) | debit_balances_margin_accounts - (free_credit_balances_cash_accounts + free_credit_balances_margin_accounts) | 杠杆净值 = D - (CC + CM) |
 
 ## 数据质量要求
 
 ### 1. 覆盖率要求
-- **Part1数据** (1997-01至今): ≥95%覆盖率
-- **Part2数据** (2010-02至2025-09): ≥95%覆盖率
+- **Part2数据** (2010-02至2025-09): ≥95%覆盖率 (基于datas/margin-statistics.csv)
+- **VIX数据** (1990-01至今): ≥95%覆盖率 (需要手动下载CBOE数据)
 - **月度数据连续性**: 缺失不超过2个月
 
 ### 2. 准确性要求

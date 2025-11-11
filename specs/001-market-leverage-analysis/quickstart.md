@@ -17,7 +17,7 @@
 - **Web框架**: Streamlit
 - **数据处理**: Pandas, NumPy
 - **可视化**: Plotly
-- **数据源**: FINRA, FRED, Yahoo Finance, CBOE
+- **数据源**: FINRA (预置数据), FRED (免费API), Yahoo Finance (免费API), CBOE (手动下载)
 
 ## 快速安装
 
@@ -37,8 +37,8 @@ pip install --upgrade pip
 ### 2. 安装依赖
 
 ```bash
-# 安装核心依赖
-pip install streamlit pandas numpy plotly yfinance fredapi
+# 安装核心依赖 (全部免费数据源，无需API Key)
+pip install streamlit pandas numpy plotly yfinance pandas_datareader
 
 # 安装分析依赖
 pip install scipy scikit-learn statsmodels
@@ -53,19 +53,27 @@ pip install pytest black flake8 jupyter
 # 创建数据目录
 mkdir -p data/raw data/processed data/cache
 
-# 准备FINRA数据文件 (用户提供)
-# 将 margin-statistics.csv 放置到 data/ 目录下
+# 1. 准备FINRA数据文件 (已提供)
+# datas/margin-statistics.csv 已存在，包含2010-02至2025-09数据
+
+# 2. 下载VIX数据 (手动操作)
+# 访问: https://www.cboe.com/tradable_products/vix/vix_historical_data/
+# 下载 VIX_History.csv 并放置到 data/raw/ 目录下
+# 数据将从日度转换为月度平均值
+
+# 3. 验证数据文件
+ls datas/  # 应该看到 margin-statistics.csv
+ls data/raw/  # 应该看到 VIX_History.csv (下载后)
 ```
 
 ### 4. 配置设置
 
 ```bash
-# 复制配置模板
-cp config/config.example.yaml config/config.yaml
-
-# 编辑配置文件，添加API密钥
-# FRED_API_KEY=your_fred_api_key
-# USE_REAL_DATA=true/false
+# 无需配置文件，所有数据源均为免费，不需要API密钥
+# 系统将自动：
+# - 从 datas/margin-statistics.csv 加载FINRA数据
+# - 使用免费API获取FRED和Yahoo Finance数据
+# - 从手动下载的VIX数据计算月度平均值
 ```
 
 ## 基本使用

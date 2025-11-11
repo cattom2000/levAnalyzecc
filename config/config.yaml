@@ -1,0 +1,250 @@
+# 市场杠杆分析系统配置文件
+
+# 数据源配置
+data_sources:
+  # FRED API配置
+  fred:
+    api_key: "${FRED_API_KEY}"  # 从环境变量获取
+    base_url: "https://api.stlouisfed.org/fred"
+    rate_limit: 120  # 每分钟请求次数
+    timeout: 30  # 请求超时时间（秒）
+
+  # Yahoo Finance配置
+  yahoo_finance:
+    rate_limit: 30  # 每分钟请求次数
+    timeout: 30
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+  # FINRA数据配置
+  finra:
+    data_file: "./data/finra_margin_debt.csv"  # 用户提供的预置数据文件
+    backup_api_enabled: false  # 是否启用备用API
+
+# 缓存配置
+cache:
+  # HTTP请求缓存
+  http_cache:
+    enabled: true
+    directory: "./cache/http"
+    expire_after: 86400  # 24小时（秒）
+
+  # 数据缓存
+  data_cache:
+    enabled: true
+    directory: "./cache/data"
+    format: "parquet"  # parquet, csv, json
+    expire_after: 604800  # 7天（秒）
+
+# 数据获取配置
+data_acquisition:
+  # 默认时间范围
+  default_start_date: "1997-01-01"
+  default_end_date: "today"  # 或者使用具体日期如 "2024-12-31"
+
+  # 重试配置
+  retry:
+    max_attempts: 3
+    base_delay: 1.0  # 基础延迟（秒）
+    max_delay: 60.0  # 最大延迟（秒）
+    backoff_factor: 2.0  # 退避因子
+
+  # 批量获取配置
+  batch:
+    enabled: true
+    max_concurrent_requests: 5
+    chunk_size: 100  # 每批数据量
+
+# 风险分析配置
+risk_analysis:
+  # 杠杆率阈值（百分比）
+  leverage_thresholds:
+    low: 1.5      # 1.5% - 低风险
+    medium: 2.5    # 2.5% - 中等风险
+    high: 3.5      # 3.5% - 高风险
+
+  # 杠杆变化率阈值（年同比增长率）
+  growth_thresholds:
+    low: -5.0      # -5% - 收缩
+    medium: 15.0   # 15% - 中等增长
+    high: 25.0     # 25% - 高增长
+
+  # 脆弱性指数阈值
+  fragility_thresholds:
+    safe: -2.0     # <-2.0 - 安全
+    caution: 0.0   # -2.0 到 0.0 - 谨慎
+    warning: 2.0   # 0.0 到 2.0 - 警告
+    danger: 999999 # >2.0 - 危险
+
+  # Z-score计算窗口
+  zscore_window: 252  # 252个交易日（约1年）
+
+  # 历史危机时期定义
+  historical_periods:
+    dot_com_bubble:
+      name: "互联网泡沫"
+      start_date: "1999-01-01"
+      end_date: "2002-12-31"
+      description: "互联网泡沫破裂时期"
+
+    financial_crisis:
+      name: "金融危机"
+      start_date: "2007-01-01"
+      end_date: "2009-12-31"
+      description: "全球金融危机时期"
+
+    covid_crash:
+      name: "疫情冲击"
+      start_date: "2020-01-01"
+      end_date: "2020-12-31"
+      description: "COVID-19疫情市场冲击"
+
+    inflation_surge:
+      name: "高通胀时期"
+      start_date: "2021-01-01"
+      end_date: "2023-12-31"
+      description: "通胀高企和加息周期"
+
+# 数据质量配置
+data_quality:
+  # 缺失值处理
+  missing_data:
+    max_allowed_gap: 5  # 最大允许连续缺失天数
+    interpolation_method: "linear"  # linear, time, forward, backward
+    drop_threshold: 0.1  # 超过10%缺失则丢弃数据
+
+  # 异常值检测
+  outlier_detection:
+    enabled: true
+    method: "iqr"  # iqr, zscore, isolation_forest
+    threshold: 3.0  # Z-score阈值或IQR倍数
+
+  # 数据一致性检查
+  consistency_checks:
+    enabled: true
+    check_duplicates: true
+    check_monotonic_date: true
+    validate_data_types: true
+
+# 监控和告警配置
+monitoring:
+  # 数据获取监控
+  data_acquisition:
+    enabled: true
+    alert_on_failure: true
+    max_failure_rate: 0.05  # 最大失败率5%
+
+  # 数据质量监控
+  data_quality:
+    enabled: true
+    alert_on_missing_data: true
+    alert_on_outliers: true
+    max_missing_rate: 0.02  # 最大缺失率2%
+
+  # 系统性能监控
+  performance:
+    enabled: true
+    alert_on_slow_response: true
+    max_response_time: 30  # 最大响应时间（秒）
+
+# 输出配置
+output:
+  # 报告生成
+  reports:
+    enabled: true
+    directory: "./reports"
+    formats: ["html", "pdf", "json"]  # 输出格式
+    template: "default"  # 报告模板
+
+  # 数据导出
+  data_export:
+    enabled: true
+    directory: "./exports"
+    formats: ["parquet", "csv", "excel"]
+    include_metadata: true
+
+# 日志配置
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}"
+
+  # 文件日志
+  file:
+    enabled: true
+    path: "./logs/market_leverage_analysis.log"
+    rotation: "1 day"  # 日志轮转
+    retention: "30 days"  # 日志保留
+
+  # 控制台日志
+  console:
+    enabled: true
+    colorize: true
+
+  # 结构化日志
+  structured:
+    enabled: false
+    format: "json"
+
+# 安全配置
+security:
+  # API密钥管理
+  api_keys:
+    use_env_vars: true  # 优先使用环境变量
+    encryption_enabled: false  # 是否加密存储密钥
+
+  # 网络安全
+  network:
+    verify_ssl: true
+    timeout: 30
+    max_retries: 3
+
+# 性能优化配置
+performance:
+  # 并发处理
+  concurrency:
+    enabled: true
+    max_workers: 4  # 最大工作线程数
+    use_async: true  # 使用异步IO
+
+  # 内存管理
+  memory:
+    chunk_size: 10000  # 数据块大小
+    gc_threshold: 1000  # 垃圾回收阈值
+
+  # 计算优化
+  computation:
+    use_numpy: true  # 使用NumPy加速计算
+    parallel_zscore: true  # 并行计算Z-score
+    vectorized_operations: true  # 向量化运算
+
+# 开发和测试配置
+development:
+  # 测试数据
+  test_data:
+    enabled: false
+    directory: "./test_data"
+    sample_size: 1000  # 测试数据样本大小
+
+  # 调试配置
+  debug:
+    enabled: false
+    verbose_logging: false
+    save_intermediate_results: false
+
+  # 仿真模式
+  simulation:
+    enabled: false
+    use_mock_data: false
+    simulate_api_delays: false
+
+# 扩展配置
+extensions:
+  # 自定义指标
+  custom_indicators:
+    enabled: false
+    directory: "./custom_indicators"
+
+  # 插件系统
+  plugins:
+    enabled: false
+    directory: "./plugins"
+    auto_load: false
