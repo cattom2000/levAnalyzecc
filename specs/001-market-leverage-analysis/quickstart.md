@@ -56,14 +56,13 @@ mkdir -p data/raw data/processed data/cache
 # 1. 准备FINRA数据文件 (已提供)
 # datas/margin-statistics.csv 已存在，包含2010-02至2025-09数据
 
-# 2. 下载VIX数据 (手动操作)
-# 访问: https://www.cboe.com/tradable_products/vix/vix_historical_data/
-# 下载 VIX_History.csv 并放置到 data/raw/ 目录下
-# 数据将从日度转换为月度平均值
+# 2. VIX数据文件 (已下载完成)
+# datas/VIX_History.csv 已存在，包含从1990-01-02开始的日度VIX数据
+# 数据格式: DATE,OPEN,HIGH,LOW,CLOSE
+# 系统将自动将日度数据转换为月度平均值
 
 # 3. 验证数据文件
-ls datas/  # 应该看到 margin-statistics.csv
-ls data/raw/  # 应该看到 VIX_History.csv (下载后)
+ls datas/  # 应该看到 margin-statistics.csv 和 VIX_History.csv
 ```
 
 ### 4. 配置设置

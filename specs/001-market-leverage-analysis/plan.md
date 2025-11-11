@@ -189,7 +189,7 @@ docs/                      # 文档
 1. **立即执行**: `/speckit.tasks` - 创建详细任务分解
 2. **数据准备**:
    - ✅ FINRA预置数据文件已提供 (datas/margin-statistics.csv)
-   - ⏳ 手动下载VIX数据 (CBOE网站)
+   - ✅ VIX数据已下载完成 (datas/VIX_History.csv)
 3. **环境搭建**: Python环境、依赖安装（无需API Key配置）
 4. **核心开发**: 数据获取模块 → 分析引擎 → 7个核心指标可视化界面
 5. **测试验证**: 单元测试 → 集成测试 → 用户验收测试

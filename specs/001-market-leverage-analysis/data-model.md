@@ -105,7 +105,7 @@ INSERT INTO data_sources VALUES
 ('FINRA_MARGIN', 'FINRA Margin Statistics', 'FILE', 'MONTHLY', '2010-02-01', NULL, NULL, NULL, TRUE, 0.99, 'Pre-provided dataset: datas/margin-statistics.csv'),
 ('FRED_RATES', 'FRED Interest Rates', 'API', 'DAILY', '1954-01-01', NULL, 'https://fred.stlouisfed.org/', NULL, TRUE, 0.95, 'Federal Reserve Economic Data - Free API'),
 ('YAHOO_FINANCE', 'Yahoo Finance Market Data', 'API', 'DAILY', '1927-01-01', NULL, 'https://finance.yahoo.com/', NULL, TRUE, 0.90, 'Stock market data - Free API'),
-('CBOE_VIX', 'CBOE VIX Index', 'FILE', 'DAILY', '1990-01-01', NULL, 'https://www.cboe.com/vix', NULL, TRUE, 0.95, 'Volatility Index - Manual download required');
+('CBOE_VIX', 'CBOE VIX Index', 'FILE', 'DAILY', '1990-01-01', NULL, 'https://www.cboe.com/vix', NULL, TRUE, 0.95, 'Volatility Index - Downloaded: datas/VIX_History.csv');
 ```
 
 ### 3. 危机时期定义表 (crisis_periods)

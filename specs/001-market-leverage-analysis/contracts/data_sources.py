@@ -225,7 +225,8 @@ class CBOEDataSourceInterface(DataSourceInterface):
 
         Note:
             数据来源: https://www.cboe.com/tradable_products/vix/vix_historical_data/
-            需要手动下载VIX_History.csv文件并转换为月度数据
+            VIX_History.csv已下载至datas/目录，系统将自动转换为月度数据
+            数据格式: DATE,OPEN,HIGH,LOW,CLOSE
         """
         pass
 
