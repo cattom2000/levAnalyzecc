@@ -4,9 +4,9 @@
 **Spec**: [spec.md](spec.md) | **Plan**: [plan.md](plan.md)
 
 ## Task Summary
-- **Total Tasks**: 32
+- **Total Tasks**: 34
 - **User Stories**: 4
-- **Phases**: 6 (Setup → Foundational → US1 → US2 → US3 → US4 → Polish)
+- **Phases**: 7 (Setup → Foundational → US1 → US2 → US3 → US4 → Polish)
 - **Estimated Duration**: 4-6 weeks for MVP (US1 + US2)
 
 ## Phase 1: Setup Tasks
@@ -51,7 +51,9 @@
   - Integrate data collector and visualization
 - [ ] T025 [US1] Add risk threshold marking and warnings
   - File: `src/analysis/signals/leverage_signals.py`
-  - 75th percentile threshold detection
+  - Implement 75th percentile threshold detection per spec.md acceptance scenario
+  - Color-coded risk levels: green (≤50th), yellow (50th-75th), red (>75th)
+  - Automatic warning popups when ratio exceeds 75th percentile
 
 ## Phase 4: User Story 2 - 多维度风险指标综合分析
 **Goal**: 用户综合分析多个风险指标，包括货币供应比率、利率成本、杠杆变化率和脆弱性指数
@@ -70,13 +72,18 @@
 - [ ] T033 [US2] Create VIX data processor
   - File: `src/data/processors/vix_processor.py`
   - Load datas/VIX_History.csv and convert daily to monthly averages
-- [ ] T034 [US2] Implement Z-score calculator for fragility index
+- [ ] T034 [US2] Implement investor net worth calculator
+  - File: `src/analysis/calculators/net_worth_calculator.py`
+  - Formula: leverage_net = debit_balances - (free_credit_cash + free_credit_margin)
+  - Based on calMethod.md杠杆净值计算方法
+  - Map to requirement FR-010 (投资者净资产计算)
+- [ ] T035 [US2] Implement Z-score calculator for fragility index
   - File: `src/analysis/statistical/zscore_calculator.py`
   - Calculate leverage Z-score and VIX Z-score
-- [ ] T035 [US2] Implement fragility index calculator
+- [ ] T036 [US2] Implement fragility index calculator
   - File: `src/analysis/risk/fragility_index.py`
   - Formula: leverage_zscore - vix_zscore
-- [ ] T036 [US2] Create multi-indicator dashboard
+- [ ] T037 [US2] Create multi-indicator dashboard
   - File: `src/pages/risk_dashboard.py`
   - Display all 7 core indicators with interactive filtering
 
@@ -118,9 +125,15 @@
 - [ ] T060 Add comprehensive error handling and user feedback
 - [ ] T061 Implement data quality monitoring and alerts
 - [ ] T062 Add performance optimizations for large datasets
-- [ ] T063 Create comprehensive test suite
-- [ ] T064 Write documentation and user guides
-- [ ] T065 Setup production deployment configuration
+- [ ] T063 Implement incremental data update mechanism
+  - File: `src/data/processors/incremental_updater.py`
+  - Track last update timestamps for each data source
+  - Support delta processing to avoid full data reload
+  - Map to requirement FR-018 (数据缓存和增量更新机制)
+  - Integration with existing SQLite cache system (T011)
+- [ ] T064 Create comprehensive test suite
+- [ ] T065 Write documentation and user guides
+- [ ] T066 Setup production deployment configuration
 
 ## Dependencies
 
