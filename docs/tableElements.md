@@ -25,3 +25,7 @@ x轴是时间，第一Y轴是`Leverage_Net(杠杆净值)`
 ```
 x轴是时间，第一Y轴是脆弱性指数
 ```
+- VIX 和 杠杆
+```
+x轴是时间，第一Y轴是VIX_t，第二Y轴是Leverage_Normalized_t
+```
