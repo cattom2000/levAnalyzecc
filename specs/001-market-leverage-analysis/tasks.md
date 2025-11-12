@@ -4,7 +4,7 @@
 **Spec**: [spec.md](spec.md) | **Plan**: [plan.md](plan.md)
 
 ## Task Summary
-- **Total Tasks**: 34
+- **Total Tasks**: 35
 - **User Stories**: 4
 - **Phases**: 7 (Setup → Foundational → US1 → US2 → US3 → US4 → Polish)
 - **Estimated Duration**: 4-6 weeks for MVP (US1 + US2)
@@ -74,16 +74,26 @@
   - Load datas/VIX_History.csv and convert daily to monthly averages
 - [ ] T034 [US2] Implement investor net worth calculator
   - File: `src/analysis/calculators/net_worth_calculator.py`
-  - Formula: leverage_net = debit_balances - (free_credit_cash + free_credit_margin)
   - Based on calMethod.md杠杆净值计算方法
   - Map to requirement FR-010 (投资者净资产计算)
+  - **Detailed calculation steps**:
+    1. 从margin-statistics.csv读取借方余额(D) - Debit Balances in Customers' Securities Margin Accounts
+    2. 读取现金账户贷方余额(CC) - Free Credit Balances in Customers' Cash Accounts
+    3. 读取保证金账户贷方余额(CM) - Free Credit Balances in Customers' Securities Margin Accounts
+    4. 计算杠杆净值 = D - (CC + CM)
+    5. 验证计算结果与预期范围
+    6. 返回杠杆净值作为投资者净资产指标
 - [ ] T035 [US2] Implement Z-score calculator for fragility index
   - File: `src/analysis/statistical/zscore_calculator.py`
   - Calculate leverage Z-score and VIX Z-score
 - [ ] T036 [US2] Implement fragility index calculator
   - File: `src/analysis/risk/fragility_index.py`
   - Formula: leverage_zscore - vix_zscore
-- [ ] T037 [US2] Create multi-indicator dashboard
+- [ ] T037 [US2] Create Yahoo Finance data collector
+  - File: `src/data/collectors/yahoo_collector.py`
+  - Fetch gold price (GC=F), BTC price (BTC-USD) data using yfinance
+  - Map to requirement FR-006 (Yahoo Finance data)
+- [ ] T038 [US2] Create multi-indicator dashboard
   - File: `src/pages/risk_dashboard.py`
   - Display all 7 core indicators with interactive filtering
 
@@ -107,33 +117,33 @@
 
 **Independent Test**: 可以独立测试Plotly交互图表功能、数据过滤逻辑和PDF报告生成功能
 
-- [ ] T050 [US4] Enhance all charts with interactivity
+- [ ] T051 [US4] Enhance all charts with interactivity
   - Files: Multiple visualization files
   - Add hover tooltips, zoom, range selection
-- [ ] T051 [US4] Implement time range selector component
+- [ ] T052 [US4] Implement time range selector component
   - File: `src/components/time_selector.py`
   - Preset ranges: 1Y, 3Y, 5Y, All
-- [ ] T052 [US4] Create report generation system
+- [ ] T053 [US4] Create report generation system
   - File: `src/reports/pdf_generator.py`
   - Export key charts and analysis summary to PDF
-- [ ] T053 [US4] Create main application entry point
+- [ ] T054 [US4] Create main application entry point
   - File: `src/app.py`
   - Integrate all pages and navigation
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T060 Add comprehensive error handling and user feedback
-- [ ] T061 Implement data quality monitoring and alerts
-- [ ] T062 Add performance optimizations for large datasets
-- [ ] T063 Implement incremental data update mechanism
+- [ ] T055 Add comprehensive error handling and user feedback
+- [ ] T056 Implement data quality monitoring and alerts
+- [ ] T057 Add performance optimizations for large datasets
+- [ ] T058 Implement incremental data update mechanism
   - File: `src/data/processors/incremental_updater.py`
   - Track last update timestamps for each data source
   - Support delta processing to avoid full data reload
   - Map to requirement FR-018 (数据缓存和增量更新机制)
   - Integration with existing SQLite cache system (T011)
-- [ ] T064 Create comprehensive test suite
-- [ ] T065 Write documentation and user guides
-- [ ] T066 Setup production deployment configuration
+- [ ] T059 Create comprehensive test suite
+- [ ] T060 Write documentation and user guides
+- [ ] T061 Setup production deployment configuration
 
 ## Dependencies
 
@@ -147,7 +157,7 @@
 - [P] Data collectors (T020, T021, T030, T033) can be developed in parallel
 - [P] Calculator modules (T022, T031, T032, T034, T035) can be developed in parallel
 - [P] Visualization components (T023, T036, T042) can be developed in parallel
-- [P] Report generation (T052) can be developed alongside UI components
+- [P] Report generation (T067) can be developed alongside UI components
 
 ## MVP Scope (Minimum Viable Product)
 **Suggested MVP**: User Stories 1 + 2 (T001-T036)
@@ -178,11 +188,11 @@ src/
 │   └── patterns/           # T041
 ├── visualization/
 │   ├── charts/             # T023, T036, T042
-│   └── components/         # T051
-├── pages/                  # T024, T053, T036
-├── reports/                # T052
-├── components/             # T051
-└── app.py                # T053
+│   └── components/         # T067
+├── pages/                  # T024, T067, T036
+├── reports/                # T067
+├── components/             # T067
+└── app.py                # T067
 ```
 
 ---

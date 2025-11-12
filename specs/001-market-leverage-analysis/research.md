@@ -117,7 +117,7 @@ class IntegratedDataSource:
 
 ## 可视化架构设计
 
-### 基于6个核心指标的图表设计 (根据docs/tableElements.md)
+### 基于7个核心指标的图表设计 (根据docs/tableElements.md)
 
 #### 1. 市场杠杆率图表
 - **双Y轴时间序列图**:
