@@ -1,12 +1,18 @@
 # 金融数据获取和处理库
 pandas>=1.5.0
 numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+statsmodels>=0.14.0
 yfinance>=0.2.18
 pandas-datareader>=0.10.0
 
 # 数据存储和处理
 pyarrow>=12.0.0      # Parquet文件支持
 requests-cache>=1.1.0  # HTTP请求缓存
+
+# Web应用框架
+streamlit>=1.28.0
 
 # 数据可视化（用于后续开发）
 plotly>=5.14.0
