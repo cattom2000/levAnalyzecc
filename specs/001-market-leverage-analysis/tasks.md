@@ -21,12 +21,12 @@
 ## Phase 2: Foundational Tasks
 **Goal**: Core infrastructure that blocks all user stories
 
-- [ ] T006 [P] Create data source interfaces (contracts/data_sources.py implementation)
-- [ ] T007 [P] Create risk analysis interfaces (contracts/risk_analysis.py implementation)
-- [ ] T008 [P] Set up data validation framework
-- [ ] T009 [P] Create project configuration and settings management
-- [ ] T010 [P] Set up logging and error handling infrastructure
-- [ ] T011 [P] Create data cache system (SQLite)
+- [x] T006 [P] Create data source interfaces (contracts/data_sources.py implementation)
+- [x] T007 [P] Create risk analysis interfaces (contracts/risk_analysis.py implementation)
+- [x] T008 [P] Set up data validation framework
+- [x] T009 [P] Create project configuration and settings management
+- [x] T010 [P] Set up logging and error handling infrastructure
+- [x] T011 [P] Create data cache system (SQLite)
 
 ## Phase 3: User Story 1 - 市场杠杆率基础分析
 **Goal**: 用户通过融资余额与S&P 500总市值的比率来评估市场整体杠杆水平

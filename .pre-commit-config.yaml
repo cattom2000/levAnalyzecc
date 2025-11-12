@@ -19,7 +19,6 @@ repos:
     rev: v1.0.0
     hooks:
       - id: mypy
-        additional_dependencies: [types-all]
         args: [--ignore-missing-imports]
 
   # 通用文件检查
