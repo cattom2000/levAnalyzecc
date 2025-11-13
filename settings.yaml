@@ -1,0 +1,35 @@
+api:
+  concurrent_requests: 5
+  rate_limit_delay: 0.1
+  request_timeout: 30
+  retry_attempts: 3
+  retry_delay: 1.0
+database:
+  backup_enabled: true
+  backup_retention_days: 7
+  cache_enabled: true
+  cache_path: data/cache/market_data.db
+  connection_pool_size: 5
+  query_timeout: 30
+environment: development
+last_updated: '2025-11-13T10:39:01.628094'
+logging:
+  backup_count: 5
+  console_output: true
+  file_path: logs/app.log
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  level: INFO
+  max_file_size: 10485760
+  structured_logging: true
+performance:
+  background_tasks: true
+  cache_warmup_enabled: true
+  chunk_size: 1000
+  max_memory_usage_mb: 2048
+  parallel_processing: true
+security:
+  access_log_enabled: true
+  api_key_encryption: true
+  audit_logging: true
+  data_retention_days: 365
+  encrypt_cache: false

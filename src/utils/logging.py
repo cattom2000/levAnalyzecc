@@ -22,6 +22,7 @@ from .settings import get_settings
 
 class LogLevel(Enum):
     """日志级别"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -31,8 +32,11 @@ class LogLevel(Enum):
 
 class ErrorCategory(Enum):
     """错误类别"""
+
     DATA_SOURCE = "data_source"
     DATA_VALIDATION = "data_validation"
+    DATA_FETCH = "data_fetch"
+    DATA_PROCESSING = "data_processing"
     CALCULATION = "calculation"
     API = "api"
     CACHE = "cache"
@@ -44,6 +48,7 @@ class ErrorCategory(Enum):
 @dataclass
 class ErrorInfo:
     """错误信息"""
+
     error_id: str
     category: ErrorCategory
     message: str
@@ -65,10 +70,10 @@ class ErrorInfo:
         """转换为字典"""
         data = asdict(self)
         # 处理datetime和enum
-        if isinstance(data['timestamp'], datetime):
-            data['timestamp'] = data['timestamp'].isoformat()
-        data['category'] = data['category'].value
-        data['severity'] = data['severity'].value
+        if isinstance(data["timestamp"], datetime):
+            data["timestamp"] = data["timestamp"].isoformat()
+        data["category"] = data["category"].value
+        data["severity"] = data["severity"].value
         return data
 
 
@@ -80,18 +85,19 @@ class StructuredLogger:
         self.logger = logging.getLogger(name)
         self.settings = get_settings()
 
-    def _log_structured(self, level: LogLevel, message: str,
-                       extra: Optional[Dict[str, Any]] = None):
+    def _log_structured(
+        self, level: LogLevel, message: str, extra: Optional[Dict[str, Any]] = None
+    ):
         """记录结构化日志"""
         if extra is None:
             extra = {}
 
         # 添加标准字段
         log_data = {
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'logger': self.name,
-            'level': level.value,
-            'message': message
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "logger": self.name,
+            "level": level.value,
+            "message": message,
         }
 
         # 合并额外字段
@@ -132,11 +138,12 @@ class StructuredLogger:
             f"Performance: {operation}",
             operation=operation,
             duration_seconds=duration,
-            **kwargs
+            **kwargs,
         )
 
-    def log_api_request(self, method: str, url: str, status_code: int,
-                        duration: float, **kwargs):
+    def log_api_request(
+        self, method: str, url: str, status_code: int, duration: float, **kwargs
+    ):
         """API请求日志"""
         self.info(
             f"API Request: {method} {url}",
@@ -144,11 +151,17 @@ class StructuredLogger:
             api_url=url,
             status_code=status_code,
             duration_seconds=duration,
-            **kwargs
+            **kwargs,
         )
 
-    def log_data_quality(self, source: str, total_records: int,
-                        valid_records: int, quality_score: float, **kwargs):
+    def log_data_quality(
+        self,
+        source: str,
+        total_records: int,
+        valid_records: int,
+        quality_score: float,
+        **kwargs,
+    ):
         """数据质量日志"""
         self.info(
             f"Data Quality: {source}",
@@ -156,27 +169,20 @@ class StructuredLogger:
             total_records=total_records,
             valid_records=valid_records,
             quality_score=quality_score,
-            **kwargs
+            **kwargs,
         )
 
-    def log_user_action(self, action: str, user_id: Optional[str] = None,
-                        **kwargs):
+    def log_user_action(self, action: str, user_id: Optional[str] = None, **kwargs):
         """用户行为日志"""
-        self.info(
-            f"User Action: {action}",
-            action=action,
-            user_id=user_id,
-            **kwargs
-        )
+        self.info(f"User Action: {action}", action=action, user_id=user_id, **kwargs)
 
-    def log_business_event(self, event_type: str, event_data: Dict[str, Any],
-                          **kwargs):
+    def log_business_event(self, event_type: str, event_data: Dict[str, Any], **kwargs):
         """业务事件日志"""
         self.info(
             f"Business Event: {event_type}",
             event_type=event_type,
             event_data=event_data,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -187,10 +193,14 @@ class ErrorHandler:
         self.logger = StructuredLogger(__name__)
         self.settings = get_settings()
 
-    def handle_exception(self, exception: Exception, category: ErrorCategory,
-                        context: Optional[Dict[str, Any]] = None,
-                        user_id: Optional[str] = None,
-                        session_id: Optional[str] = None) -> ErrorInfo:
+    def handle_exception(
+        self,
+        exception: Exception,
+        category: ErrorCategory,
+        context: Optional[Dict[str, Any]] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> ErrorInfo:
         """处理异常"""
         # 生成错误ID
         error_id = f"{category.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{id(exception)}"
@@ -204,18 +214,19 @@ class ErrorHandler:
             stack_trace=traceback.format_exc(),
             context=context or {},
             user_id=user_id,
-            session_id=session_id
+            session_id=session_id,
         )
 
         # 记录错误日志
         self.logger.error(
-            f"Exception caught: {error_info.message}",
-            error_info=error_info.to_dict()
+            f"Exception caught: {error_info.message}", error_info=error_info.to_dict()
         )
 
         # 根据设置决定是否发送告警
-        if (self.settings.security.audit_logging and
-            error_info.severity in [LogLevel.ERROR, LogLevel.CRITICAL]):
+        if self.settings.security.audit_logging and error_info.severity in [
+            LogLevel.ERROR,
+            LogLevel.CRITICAL,
+        ]:
             self._send_alert(error_info)
 
         return error_info
@@ -228,25 +239,28 @@ class ErrorHandler:
 
         alert_message = f"[ALERT] {error_info.timestamp.isoformat()} - {error_info.category.value} - {error_info.message}"
 
-        with open(alert_file, 'a', encoding='utf-8') as f:
-            f.write(alert_message + '\n')
+        with open(alert_file, "a", encoding="utf-8") as f:
+            f.write(alert_message + "\n")
 
-    def create_error_response(self, error_info: ErrorInfo,
-                            include_details: bool = False) -> Dict[str, Any]:
+    def create_error_response(
+        self, error_info: ErrorInfo, include_details: bool = False
+    ) -> Dict[str, Any]:
         """创建错误响应"""
         response = {
             "success": False,
             "error_id": error_info.error_id,
             "message": error_info.message,
-            "category": error_info.category.value
+            "category": error_info.category.value,
         }
 
         if include_details:
-            response.update({
-                "exception_type": error_info.exception_type,
-                "context": error_info.context,
-                "timestamp": error_info.timestamp.isoformat()
-            })
+            response.update(
+                {
+                    "exception_type": error_info.exception_type,
+                    "context": error_info.context,
+                    "timestamp": error_info.timestamp.isoformat(),
+                }
+            )
 
         return response
 
@@ -255,10 +269,13 @@ class ErrorHandler:
 error_handler = ErrorHandler()
 
 
-def handle_errors(category: ErrorCategory = ErrorCategory.SYSTEM,
-                 return_error_info: bool = False,
-                 log_args: bool = True):
+def handle_errors(
+    category: ErrorCategory = ErrorCategory.SYSTEM,
+    return_error_info: bool = False,
+    log_args: bool = True,
+):
     """错误处理装饰器"""
+
     def decorator(func):
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -267,11 +284,13 @@ def handle_errors(category: ErrorCategory = ErrorCategory.SYSTEM,
             except Exception as e:
                 context = {}
                 if log_args:
-                    context.update({
-                        "function": func.__name__,
-                        "args_count": len(args),
-                        "kwargs_keys": list(kwargs.keys())
-                    })
+                    context.update(
+                        {
+                            "function": func.__name__,
+                            "args_count": len(args),
+                            "kwargs_keys": list(kwargs.keys()),
+                        }
+                    )
 
                 error_info = error_handler.handle_exception(e, category, context)
 
@@ -287,11 +306,13 @@ def handle_errors(category: ErrorCategory = ErrorCategory.SYSTEM,
             except Exception as e:
                 context = {}
                 if log_args:
-                    context.update({
-                        "function": func.__name__,
-                        "args_count": len(args),
-                        "kwargs_keys": list(kwargs.keys())
-                    })
+                    context.update(
+                        {
+                            "function": func.__name__,
+                            "args_count": len(args),
+                            "kwargs_keys": list(kwargs.keys()),
+                        }
+                    )
 
                 error_info = error_handler.handle_exception(e, category, context)
 
@@ -310,8 +331,10 @@ def handle_errors(category: ErrorCategory = ErrorCategory.SYSTEM,
 
 
 @contextmanager
-def error_context(category: ErrorCategory = ErrorCategory.SYSTEM,
-                 context: Optional[Dict[str, Any]] = None):
+def error_context(
+    category: ErrorCategory = ErrorCategory.SYSTEM,
+    context: Optional[Dict[str, Any]] = None,
+):
     """错误处理上下文管理器"""
     try:
         yield
@@ -359,6 +382,7 @@ class PerformanceMonitor:
 
     def monitor_async(self, operation: str, **context):
         """异步性能监控装饰器"""
+
         def decorator(func):
             @wraps(func)
             async def wrapper(*args, **kwargs):
@@ -369,10 +393,11 @@ class PerformanceMonitor:
                 finally:
                     duration = (datetime.now() - start_time).total_seconds()
                     self.logger.log_performance(
-                        operation, duration,
-                        function=func.__name__, **context
+                        operation, duration, function=func.__name__, **context
                     )
+
             return wrapper
+
         return decorator
 
 
@@ -386,8 +411,9 @@ class AuditLogger:
     def __init__(self):
         self.logger = get_logger("audit")
 
-    def log_data_access(self, user_id: str, data_source: str,
-                       record_count: int, **context):
+    def log_data_access(
+        self, user_id: str, data_source: str, record_count: int, **context
+    ):
         """记录数据访问"""
         self.logger.info(
             f"Data access: {data_source}",
@@ -395,29 +421,31 @@ class AuditLogger:
             user_id=user_id,
             data_source=data_source,
             record_count=record_count,
-            **context
+            **context,
         )
 
-    def log_configuration_change(self, user_id: str, config_changes: Dict[str, Any],
-                               **context):
+    def log_configuration_change(
+        self, user_id: str, config_changes: Dict[str, Any], **context
+    ):
         """记录配置变更"""
         self.logger.info(
             "Configuration changed",
             event_type="config_change",
             user_id=user_id,
             config_changes=config_changes,
-            **context
+            **context,
         )
 
-    def log_security_event(self, event_type: str, user_id: Optional[str] = None,
-                          **context):
+    def log_security_event(
+        self, event_type: str, user_id: Optional[str] = None, **context
+    ):
         """记录安全事件"""
         self.logger.warning(
             f"Security event: {event_type}",
             event_type="security",
             security_event_type=event_type,
             user_id=user_id,
-            **context
+            **context,
         )
 
 
@@ -427,6 +455,7 @@ audit_logger = AuditLogger()
 
 def log_function_call(level: LogLevel = LogLevel.DEBUG):
     """函数调用日志装饰器"""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -435,7 +464,7 @@ def log_function_call(level: LogLevel = LogLevel.DEBUG):
                 f"Calling function: {func.__name__}",
                 function=func.__name__,
                 args_count=len(args),
-                kwargs_keys=list(kwargs.keys())
+                kwargs_keys=list(kwargs.keys()),
             )
 
             try:
@@ -443,7 +472,7 @@ def log_function_call(level: LogLevel = LogLevel.DEBUG):
                 getattr(logger, level.value.lower())(
                     f"Function completed: {func.__name__}",
                     function=func.__name__,
-                    success=True
+                    success=True,
                 )
                 return result
             except Exception as e:
@@ -451,11 +480,12 @@ def log_function_call(level: LogLevel = LogLevel.DEBUG):
                     f"Function failed: {func.__name__}",
                     function=func.__name__,
                     success=False,
-                    error=str(e)
+                    error=str(e),
                 )
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -466,31 +496,34 @@ class MetricsCollector:
         self.metrics: Dict[str, list] = {}
         self.logger = get_logger(__name__)
 
-    def record_metric(self, metric_name: str, value: float,
-                     tags: Optional[Dict[str, str]] = None):
+    def record_metric(
+        self, metric_name: str, value: float, tags: Optional[Dict[str, str]] = None
+    ):
         """记录指标"""
         if metric_name not in self.metrics:
             self.metrics[metric_name] = []
 
-        self.metrics[metric_name].append({
-            'value': value,
-            'timestamp': datetime.now(timezone.utc),
-            'tags': tags or {}
-        })
+        self.metrics[metric_name].append(
+            {
+                "value": value,
+                "timestamp": datetime.now(timezone.utc),
+                "tags": tags or {},
+            }
+        )
 
     def get_metric_summary(self, metric_name: str) -> Dict[str, Any]:
         """获取指标摘要"""
         if metric_name not in self.metrics or not self.metrics[metric_name]:
             return {}
 
-        values = [m['value'] for m in self.metrics[metric_name]]
+        values = [m["value"] for m in self.metrics[metric_name]]
         return {
-            'count': len(values),
-            'sum': sum(values),
-            'avg': sum(values) / len(values),
-            'min': min(values),
-            'max': max(values),
-            'latest': values[-1]
+            "count": len(values),
+            "sum": sum(values),
+            "avg": sum(values) / len(values),
+            "min": min(values),
+            "max": max(values),
+            "latest": values[-1],
         }
 
     def log_metrics_summary(self):
@@ -501,7 +534,7 @@ class MetricsCollector:
                 self.logger.info(
                     f"Metrics summary for {metric_name}",
                     metric_name=metric_name,
-                    **summary
+                    **summary,
                 )
 
 

@@ -1,6 +1,6 @@
 """
-pnŒÁ!W
-Ğ›pn(ÏÀåŒÁÄŒ8ÀKŸı
+æ•°æ®éªŒè¯æ¨¡å—
+æä¾›æ•°æ®è´¨é‡æ£€æŸ¥å’ŒéªŒè¯åŠŸèƒ½
 """
 
 from .base_validator import (
@@ -10,15 +10,15 @@ from .base_validator import (
     ValidationResult,
     ValidationRule,
     ValidationLevel,
-    DataType
+    DataType,
 )
 
 __all__ = [
-    'DataQualityValidator',
-    'FinancialDataValidator',
-    'ValidationReport',
-    'ValidationResult',
-    'ValidationRule',
-    'ValidationLevel',
-    'DataType'
+    "DataQualityValidator",
+    "FinancialDataValidator",
+    "ValidationReport",
+    "ValidationResult",
+    "ValidationRule",
+    "ValidationLevel",
+    "DataType",
 ]
