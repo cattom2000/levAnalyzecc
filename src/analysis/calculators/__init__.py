@@ -26,11 +26,18 @@ from .net_worth_calculator import (
     calculate_leverage_net,
 )
 
+from .fragility_calculator import (
+    FragilityCalculator,
+    calculate_market_fragility,
+    assess_market_regime,
+)
+
 __all__ = [
     "LeverageRatioCalculator",
     "MoneySupplyRatioCalculator",
     "LeverageChangeCalculator",
     "NetWorthCalculator",
+    "FragilityCalculator",
     "calculate_market_leverage_ratio",
     "assess_leverage_risk",
     "calculate_money_supply_ratio",
@@ -38,4 +45,6 @@ __all__ = [
     "calculate_leverage_net_changes",
     "calculate_investor_net_worth",
     "calculate_leverage_net",
+    "calculate_market_fragility",
+    "assess_market_regime",
 ]
