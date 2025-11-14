@@ -10,7 +10,7 @@ from datetime import datetime, date
 from typing import Dict, Any, Optional, Tuple, List
 import asyncio
 
-from ...contracts.data_sources import (
+from src.contracts.data_sources import (
     FileDataSource,
     DataResult,
     DataQuery,
@@ -21,9 +21,9 @@ from ...contracts.data_sources import (
     IDataValidator,
     DataValidationError,
 )
-from ...data.validators import FinancialDataValidator
-from ...utils.logging import get_logger, handle_errors, ErrorCategory
-from ...config.config import get_config
+from src.data.validators import FinancialDataValidator
+from src.utils.logging import get_logger, handle_errors, ErrorCategory
+from src.config.config import get_config
 
 
 class FINRACollector(FileDataSource, IStaticDataProvider):
@@ -45,6 +45,11 @@ class FINRACollector(FileDataSource, IStaticDataProvider):
         self.data_validator = FinancialDataValidator()
         self._data: Optional[pd.DataFrame] = None
         self._metadata: Dict[str, Any] = {}
+
+    @property
+    def source_type(self) -> DataSourceType:
+        """返回数据源类型"""
+        return DataSourceType.FILE
 
     @handle_errors(ErrorCategory.DATA_SOURCE)
     async def fetch_data(self, query: DataQuery) -> DataResult:
@@ -206,6 +211,50 @@ class FINRACollector(FileDataSource, IStaticDataProvider):
             filtered_data = filtered_data[available_fields]
 
         return filtered_data
+
+    def load_file(self, query: DataQuery) -> pd.DataFrame:
+        """
+        加载FINRA数据文件
+
+        Args:
+            query: 数据查询参数
+
+        Returns:
+            pd.DataFrame: 加载的数据
+        """
+        self.logger.info(f"加载FINRA数据文件: {self.file_path}")
+
+        try:
+            # 读取CSV文件
+            data = pd.read_csv(self.file_path)
+
+            # 处理日期列（假设第一列是日期）
+            date_column = data.columns[0]
+            data[date_column] = pd.to_datetime(data[date_column])
+            data.set_index(date_column, inplace=True)
+
+            # 重命名列以匹配标准格式
+            column_mapping = {
+                'Debit Balances': 'debit_balances',
+                'Credit Balances': 'credit_balances',
+                'Total': 'total_margin_debt',
+                'Free Credit Balances': 'free_credit_balances'
+            }
+
+            # 应用列重命名（如果存在）
+            for old_name, new_name in column_mapping.items():
+                if old_name in data.columns:
+                    data.rename(columns={old_name: new_name}, inplace=True)
+
+            self.logger.info(f"成功加载 {len(data)} 条记录")
+            return data
+
+        except FileNotFoundError:
+            self.logger.error(f"FINRA数据文件未找到: {self.file_path}")
+            raise
+        except Exception as e:
+            self.logger.error(f"加载FINRA数据文件失败: {e}")
+            raise
 
     def validate_query(self, query: DataQuery) -> bool:
         """验证查询参数"""

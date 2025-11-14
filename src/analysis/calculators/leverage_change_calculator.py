@@ -40,19 +40,16 @@ class LeverageChangeCalculator(IRiskCalculator):
     @property
     def supported_timeframes(self) -> List[AnalysisTimeframe]:
         return [
-            AnalysisTimeframe.THREE_MONTHS,
-            AnalysisTimeframe.SIX_MONTHS,
-            AnalysisTimeframe.ONE_YEAR,
-            AnalysisTimeframe.THREE_YEARS,
-            AnalysisTimeframe.FIVE_YEARS,
-            AnalysisTimeframe.TEN_YEARS,
+            AnalysisTimeframe.SHORT_TERM,    # 1-3个月
+            AnalysisTimeframe.MEDIUM_TERM,  # 3-12个月
+            AnalysisTimeframe.LONG_TERM,    # 1-5年
         ]
 
     @handle_errors(ErrorCategory.BUSINESS_LOGIC)
     async def calculate_risk_indicators(
         self,
         data: pd.DataFrame,
-        timeframe: AnalysisTimeframe = AnalysisTimeframe.ONE_YEAR,
+        timeframe: AnalysisTimeframe = AnalysisTimeframe.LONG_TERM,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -787,7 +784,7 @@ class LeverageChangeCalculator(IRiskCalculator):
 # 便捷函数
 async def calculate_leverage_change_rate(
     finra_data: pd.DataFrame,
-    timeframe: AnalysisTimeframe = AnalysisTimeframe.ONE_YEAR
+    timeframe: AnalysisTimeframe = AnalysisTimeframe.LONG_TERM
 ) -> Dict[str, Any]:
     """
     便捷函数：计算杠杆变化率

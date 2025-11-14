@@ -552,7 +552,8 @@ class TestComprehensiveSignalGenerator:
             assert len(signal.recommendations) > 0
             assert len(signal.contributing_factors) > 0
 
-    def test_signal_confidence_threshold(self, generator, sample_data_sources):
+    @pytest.mark.asyncio
+    async def test_signal_confidence_threshold(self, generator, sample_data_sources):
         """测试信号置信度阈值"""
         # 临时降低置信度阈值以观察效果
         original_min_confidence = generator.signal_config['min_confidence']
@@ -567,7 +568,8 @@ class TestComprehensiveSignalGenerator:
         for signal in signals:
             assert signal.confidence >= original_min_confidence
 
-    def test_edge_cases_missing_data(self, generator):
+    @pytest.mark.asyncio
+    async def test_edge_cases_missing_data(self, generator):
         """测试缺失数据的边界情况"""
         # 测试完全缺失的数据
         empty_data = {}
@@ -582,7 +584,8 @@ class TestComprehensiveSignalGenerator:
         signals = await generator.generate_all_signals(partial_data)
         assert isinstance(signals, list)
 
-    def test_performance_with_large_dataset(self, generator):
+    @pytest.mark.asyncio
+    async def test_performance_with_large_dataset(self, generator):
         """测试大数据集性能"""
         import time
 
@@ -602,7 +605,8 @@ class TestComprehensiveSignalGenerator:
         # 验证结果
         assert isinstance(signals, list)
 
-    def test_signal_ordering_and_timestamps(self, generator, sample_data_sources):
+    @pytest.mark.asyncio
+    async def test_signal_ordering_and_timestamps(self, generator, sample_data_sources):
         """测试信号排序和时间戳"""
         signals = await generator.generate_all_signals(sample_data_sources)
 
@@ -616,7 +620,8 @@ class TestComprehensiveSignalGenerator:
             timestamps = [signal.timestamp for signal in signals]
             assert all(isinstance(ts, datetime) for ts in timestamps)
 
-    def test_signal_recommendations_quality(self, generator, sample_data_sources):
+    @pytest.mark.asyncio
+    async def test_signal_recommendations_quality(self, generator, sample_data_sources):
         """测试信号建议质量"""
         signals = await generator.generate_all_signals(sample_data_sources)
 

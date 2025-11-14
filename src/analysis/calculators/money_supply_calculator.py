@@ -40,20 +40,17 @@ class MoneySupplyRatioCalculator(IRiskCalculator):
     @property
     def supported_timeframes(self) -> List[AnalysisTimeframe]:
         return [
-            AnalysisTimeframe.ONE_MONTH,
-            AnalysisTimeframe.THREE_MONTHS,
-            AnalysisTimeframe.SIX_MONTHS,
-            AnalysisTimeframe.ONE_YEAR,
-            AnalysisTimeframe.THREE_YEARS,
-            AnalysisTimeframe.FIVE_YEARS,
-            AnalysisTimeframe.TEN_YEARS,
+            AnalysisTimeframe.SHORT_TERM,    # 1-3个月
+            AnalysisTimeframe.MEDIUM_TERM,  # 3-12个月
+            AnalysisTimeframe.LONG_TERM,    # 1-5年
+            AnalysisTimeframe.HISTORICAL,   # 5年以上
         ]
 
     @handle_errors(ErrorCategory.BUSINESS_LOGIC)
     async def calculate_risk_indicators(
         self,
         data: pd.DataFrame,
-        timeframe: AnalysisTimeframe = AnalysisTimeframe.ONE_YEAR,
+        timeframe: AnalysisTimeframe = AnalysisTimeframe.LONG_TERM,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -611,7 +608,7 @@ class MoneySupplyRatioCalculator(IRiskCalculator):
 async def calculate_money_supply_ratio(
     margin_data: pd.DataFrame,
     m2_data: pd.DataFrame,
-    timeframe: AnalysisTimeframe = AnalysisTimeframe.ONE_YEAR
+    timeframe: AnalysisTimeframe = AnalysisTimeframe.LONG_TERM
 ) -> Dict[str, Any]:
     """
     便捷函数：计算货币供应比率
