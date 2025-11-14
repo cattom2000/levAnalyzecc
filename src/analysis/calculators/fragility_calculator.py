@@ -52,11 +52,11 @@ class FragilityCalculator(IRiskCalculator):
     @property
     def supported_timeframes(self) -> List[AnalysisTimeframe]:
         return [
-            AnalysisTimeframe.SIX_MONTHS,
-            AnalysisTimeframe.ONE_YEAR,
-            AnalysisTimeframe.THREE_YEARS,
-            AnalysisTimeframe.FIVE_YEARS,
-            AnalysisTimeframe.TEN_YEARS,
+            AnalysisTimeframe.MEDIUM_TERM,
+            AnalysisTimeframe.LONG_TERM,
+            AnalysisTimeframe.LONG_TERM,
+            AnalysisTimeframe.LONG_TERM,
+            AnalysisTimeframe.HISTORICAL,
         ]
 
     @handle_errors(ErrorCategory.BUSINESS_LOGIC)
@@ -64,7 +64,7 @@ class FragilityCalculator(IRiskCalculator):
         self,
         leverage_data: pd.Series,
         vix_data: pd.Series,
-        timeframe: AnalysisTimeframe = AnalysisTimeframe.ONE_YEAR,
+        timeframe: AnalysisTimeframe = AnalysisTimeframe.LONG_TERM,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -895,7 +895,7 @@ class FragilityCalculator(IRiskCalculator):
 async def calculate_market_fragility(
     leverage_data: pd.Series,
     vix_data: pd.Series,
-    timeframe: AnalysisTimeframe = AnalysisTimeframe.ONE_YEAR
+    timeframe: AnalysisTimeframe = AnalysisTimeframe.LONG_TERM
 ) -> Dict[str, Any]:
     """
     便捷函数：计算市场脆弱性指数
@@ -930,7 +930,7 @@ async def assess_market_regime(
 
     # 先计算脆弱性指数
     result = await calculator.calculate_risk_indicators(
-        leverage_data, vix_data, AnalysisTimeframe.ONE_YEAR
+        leverage_data, vix_data, AnalysisTimeframe.LONG_TERM
     )
 
     return result.get('market_regime_analysis', {})

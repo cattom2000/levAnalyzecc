@@ -9,7 +9,7 @@ import sys
 import traceback
 import json
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone
 from typing import Dict, Any, Optional, Union
 from contextlib import contextmanager
 from functools import wraps
@@ -105,8 +105,18 @@ class StructuredLogger:
 
         # 根据设置选择格式化器
         if self.settings.logging.structured_logging:
-            # JSON格式日志
-            json_message = json.dumps(log_data, ensure_ascii=False)
+            # JSON格式日志 - 使用自定义编码器处理特殊类型
+            class DateTimeEncoder(json.JSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, datetime):
+                        return obj.isoformat()
+                    if isinstance(obj, date):
+                        return obj.isoformat()
+                    if hasattr(obj, 'value'):  # 处理枚举类型
+                        return obj.value
+                    return super().default(obj)
+
+            json_message = json.dumps(log_data, ensure_ascii=False, cls=DateTimeEncoder)
             getattr(self.logger, level.value.lower())(json_message)
         else:
             # 标准格式日志
