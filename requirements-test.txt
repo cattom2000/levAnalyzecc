@@ -1,0 +1,52 @@
+# 测试框架依赖
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+pytest-benchmark>=4.0.0
+pytest-timeout>=2.1.0
+
+# 覆盖率报告
+coverage>=7.3.0
+codecov>=2.1.0
+
+# 测试工具
+factory-boy>=3.3.0
+faker>=19.0.0
+responses>=0.23.0
+freezegun>=1.2.0
+testfixtures>=7.2.0
+
+# 性能测试
+memory-profiler>=0.61.0
+psutil>=5.9.0
+
+# 文档测试
+sphinx>=7.1.0
+sphinx-rtd-theme>=1.3.0
+
+# API测试
+httpx>=0.24.0
+aiohttp>=3.8.0
+
+# 数据库测试(如果需要)
+sqlalchemy[testing]>=2.0.0
+alembic>=1.11.0
+
+# 安全测试工具
+bandit[toml]>=1.7.0
+safety>=2.3.0
+
+# 代码质量
+flake8>=6.0.0
+black>=23.7.0
+isort>=5.12.0
+mypy>=1.5.0
+
+# 并发测试
+pytest-parallel>=0.1.1
+
+# HTML测试报告
+pytest-html>=4.1.0
+pytest-json-report>=1.5.0

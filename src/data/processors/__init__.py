@@ -1,6 +1,6 @@
 """
-pnh!W
-#��y�{��pn
+数据处理器模块
+提供各种金融数据的处理和分析功能
 """
 
 from .vix_processor import (

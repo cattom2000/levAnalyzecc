@@ -14,10 +14,20 @@ import time
 from ...contracts.data_sources import (
     IFinancialDataProvider,
     DataSourceType,
-    DataSourceConfig,
-    DataValidationResult,
     APIRateLimitError
 )
+from ...config.config import get_config, DataSourceConfig
+
+
+class DataValidationResult:
+    """数据验证结果"""
+
+    def __init__(self, is_valid: bool, error_message: str = None, errors: List[str] = None):
+        self.is_valid = is_valid
+        self.error_message = error_message
+        self.errors = errors or []
+
+
 from ...utils.logging import get_logger, handle_errors, ErrorCategory
 from ...utils.settings import get_settings
 

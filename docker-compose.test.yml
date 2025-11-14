@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # 主测试环境
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: levAnalyze_test_runner
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./pytest.ini:/app/pytest.ini
+      - ./conftest.py:/app/conftest.py
+      - test-reports:/app/test-reports
+      - htmlcov:/app/htmlcov
+    environment:
+      - TESTING=true
+      - PYTHONPATH=/app/src
+      - COVERAGE_FILE=/app/test-reports/.coverage
+    command: pytest tests/ --cov=src --cov-report=html:/app/htmlcov --cov-report=xml:/app/test-reports/coverage.xml --junit-xml=/app/test-reports/test-results.xml -v
+    networks:
+      - test-network
+
+  # 单元测试专用
+  unit-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: levAnalyze_unit_tests
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - test-reports:/app/test-reports
+    environment:
+      - TESTING=true
+      - UNIT_TEST=true
+      - PYTHONPATH=/app/src
+    command: pytest tests/ -m "unit" --junit-xml=/app/test-reports/unit-test-results.xml -v
+    networks:
+      - test-network
+
+  # 集成测试专用
+  integration-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: levAnalyze_integration_tests
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - test-reports:/app/test-reports
+    environment:
+      - TESTING=true
+      - INTEGRATION_TEST=true
+      - PYTHONPATH=/app/src
+    command: pytest tests/ -m "integration" --junit-xml=/app/test-reports/integration-test-results.xml -v
+    networks:
+      - test-network
+
+  # 数据质量测试专用
+  data-quality-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: levAnalyze_data_quality_tests
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - test-reports:/app/test-reports
+    environment:
+      - TESTING=true
+      - DATA_QUALITY_TEST=true
+      - PYTHONPATH=/app/src
+    command: pytest tests/ -m "data_quality" --junit-xml=/app/test-reports/data-quality-test-results.xml -v
+    networks:
+      - test-network
+
+  # 性能测试专用
+  performance-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: levAnalyze_performance_tests
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - test-reports:/app/test-reports
+    environment:
+      - TESTING=true
+      - PERFORMANCE_TEST=true
+      - PYTHONPATH=/app/src
+    command: pytest tests/ -m "performance" --benchmark-json=/app/test-reports/performance-results.json -v
+    networks:
+      - test-network
+
+  # 测试报告服务
+  test-reports:
+    image: nginx:alpine
+    container_name: levAnalyze_test_reports
+    volumes:
+      - htmlcov:/usr/share/nginx/html/coverage
+      - test-reports:/usr/share/nginx/html/reports
+    ports:
+      - "8080:80"
+    networks:
+      - test-network
+    depends_on:
+      - test-runner
+
+volumes:
+  test-reports:
+    driver: local
+  htmlcov:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
