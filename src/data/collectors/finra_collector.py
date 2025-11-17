@@ -385,6 +385,34 @@ class FINRACollector(FileDataSource, IStaticDataProvider):
             return (self._data.index.min().date(), self._data.index.max().date())
         return None, None
 
+    def _generate_metadata(self) -> Dict[str, Any]:
+        """生成数据元数据"""
+        metadata = {
+            "source": "FINRA",
+            "description": "融资余额统计 - 客户保证金账户借方余额",
+            "data_frequency": "monthly",
+            "currency": "USD",
+            "units": "millions_of_dollars"
+        }
+
+        # 如果数据已加载，添加更详细的信息
+        if self._data is not None and len(self._data) > 0:
+            metadata.update({
+                "coverage_start": self._data.index.min(),
+                "coverage_end": self._data.index.max(),
+                "total_records": len(self._data),
+                "columns": list(self._data.columns),
+                "latest_period": self._data.index[-1],
+                "latest_debit_balances": float(self._data["debit_balances"].iloc[-1]) if "debit_balances" in self._data.columns else None,
+                "data_quality_score": self.data_validator.validate_dataframe(self._data).overall_score if self.data_validator else None
+            })
+
+        # 合并文件元数据
+        if hasattr(self, '_metadata') and self._metadata:
+            metadata.update(self._metadata)
+
+        return metadata
+
 
 # 便捷函数
 async def get_finra_data(

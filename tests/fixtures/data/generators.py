@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
+from pathlib import Path
 
 
 class MockDataGenerator:
@@ -22,7 +23,7 @@ class MockDataGenerator:
         if seed:
             np.random.seed(seed)
 
-        dates = pd.date_range(start=start_date, periods=periods, freq='M')
+        dates = pd.date_range(start=start_date, periods=periods, freq='ME')
 
         # 基础值（单位：百万美元）
         base_debit = 500000  # 5000亿美元
@@ -111,7 +112,7 @@ class MockDataGenerator:
         if seed:
             np.random.seed(seed)
 
-        dates = pd.date_range(start=start_date, periods=periods, freq='M')
+        dates = pd.date_range(start=start_date, periods=periods, freq='ME')
 
         # M2货币供应量（单位：十亿美元）
         m2_base = 15000
@@ -140,91 +141,175 @@ class MockDataGenerator:
     def generate_calculation_data(
         start_date: str = "2020-01-01",
         periods: int = 48,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
+        volatility: float = 0.05,
+        trend: float = 0.02
     ) -> Dict[str, pd.Series]:
         """生成用于计算的标准数据"""
         if seed:
             np.random.seed(seed)
 
-        dates = pd.date_range(start=start_date, periods=periods, freq='M')
+        dates = pd.date_range(start=start_date, periods=periods, freq='ME')
+
+        # 动态生成杠杆债务数据
+        base_margin_debt = 500000  # 基础融资债务5000亿美元
+        margin_debt_values = []
+
+        for i in range(periods):
+            # 添加趋势和合理的波动性
+            trend_factor = 1 + trend * i
+            volatility_factor = 1 + np.random.normal(0, volatility)
+            margin_debt = base_margin_debt * trend_factor * volatility_factor
+            margin_debt = max(int(margin_debt), 100000)  # 确保最小值
+            margin_debt_values.append(margin_debt)
+
+        # 动态生成市值数据
+        base_market_cap = 35000000  # 基础市值35万亿美元
+        sp500_market_cap_values = []
+
+        for i in range(periods):
+            # 市值与债务相关性，但有更稳定的增长
+            trend_factor = 1 + trend * 0.8 * i
+            volatility_factor = 1 + np.random.normal(0, volatility * 0.6)
+            market_cap = base_market_cap * trend_factor * volatility_factor
+            market_cap = max(int(market_cap), 10000000)  # 确保最小值
+            sp500_market_cap_values.append(market_cap)
+
+        # 动态生成M2货币供应量数据
+        base_m2_supply = 15000  # 基础M2供应量1.5万亿美元
+        m2_supply_values = []
+
+        for i in range(periods):
+            # M2供应量稳定增长，波动性较小
+            growth_rate = 0.01 + np.random.normal(0, 0.005)
+            if i == 0:
+                m2_supply = base_m2_supply
+            else:
+                m2_supply = m2_supply_values[-1] * (1 + growth_rate)
+            m2_supply_values.append(float(max(m2_supply, 10000)))
+
+        # 动态生成VIX数据
+        vix_values = []
+        base_vix = 20.0
+
+        for i in range(periods):
+            # VIX具有均值回归特性
+            if i == 0:
+                vix = base_vix
+            else:
+                # 均值回归 + 随机波动
+                reversion_force = 0.1 * (base_vix - vix_values[-1])
+                random_shock = np.random.normal(0, 2)
+                vix = vix_values[-1] + reversion_force + random_shock
+                vix = max(float(vix), 5.0)  # VIX最小值
+                vix = min(float(vix), 80.0)  # VIX最大值
+            vix_values.append(vix)
 
         return {
-            'margin_debt': pd.Series([
-                500000, 520000, 510000, 530000, 540000,
-                550000, 560000, 580000, 590000, 600000,
-                610000, 620000, 630000, 640000, 650000,
-                660000, 670000, 680000, 690000, 700000,
-                710000, 720000, 730000, 740000, 750000,
-                760000, 770000, 780000, 790000, 800000,
-                810000, 820000, 830000, 840000, 850000,
-                860000, 870000, 880000, 890000, 900000,
-                910000, 920000, 930000, 940000, 950000,
-                960000, 970000, 980000, 990000, 1000000,
-                1010000, 1020000, 1030000, 1040000, 1050000,
-                1060000, 1070000, 1080000, 1090000, 1100000,
-                1110000, 1120000, 1130000, 1140000, 1150000,
-                1160000, 1170000, 1180000, 1190000, 1200000
-            ], index=dates),
-            'sp500_market_cap': pd.Series([
-                35000000, 35500000, 36000000, 36500000, 37000000,
-                37500000, 38000000, 38500000, 39000000, 39500000,
-                40000000, 40500000, 41000000, 41500000, 42000000,
-                42500000, 43000000, 43500000, 44000000, 44500000,
-                45000000, 45500000, 46000000, 46500000, 47000000,
-                47500000, 48000000, 48500000, 49000000, 49500000,
-                50000000, 50500000, 51000000, 51500000, 52000000,
-                52500000, 53000000, 53500000, 54000000, 54500000,
-                55000000, 55500000, 56000000, 56500000, 57000000,
-                57500000, 58000000, 58500000, 59000000, 59500000,
-                60000000, 60500000, 61000000, 61500000, 62000000,
-                62500000, 63000000, 63500000, 64000000, 64500000,
-                65000000, 65500000, 66000000, 66500000, 67000000,
-                67500000, 68000000, 68500000, 69000000, 69500000,
-                70000000, 70500000, 71000000, 71500000, 72000000
-            ], index=dates),
-            'm2_supply': pd.Series([
-                15000, 15100, 15200, 15300, 15400,
-                15500, 15600, 15700, 15800, 15900,
-                16000, 16100, 16200, 16300, 16400,
-                16500, 16600, 16700, 16800, 16900,
-                17000, 17100, 17200, 17300, 17400,
-                17500, 17600, 17700, 17800, 17900,
-                18000, 18100, 18200, 18300, 18400,
-                18500, 18600, 18700, 18800, 18900,
-                19000, 19100, 19200, 19300, 19400,
-                19500, 19600, 19700, 19800, 19900,
-                20000, 20100, 20200, 20300, 20400,
-                20500, 20600, 20700, 20800, 20900,
-                21000, 21100, 21200, 21300, 21400,
-                21500, 21600, 21700, 21800, 21900,
-                22000, 22100, 22200, 22300, 22400,
-                22500, 22600, 22700, 22800, 22900,
-                23000, 23100, 23200, 23300, 23400,
-                23500, 23600, 23700, 23800, 23900,
-                24000, 24100, 24200, 24300, 24400,
-                24500, 24600, 24700, 24800, 24900,
-                25000, 25100, 25200, 25300, 25400
-            ], index=dates),
-            'vix_data': pd.Series([
-                18.5, 16.2, 19.8, 22.1, 15.7,
-                12.3, 14.6, 17.9, 21.2, 24.5,
-                20.1, 18.7, 16.4, 19.2, 22.8,
-                25.6, 23.1, 20.8, 18.3, 16.9,
-                19.5, 22.3, 25.8, 28.1, 24.7,
-                21.3, 18.9, 16.5, 19.8, 23.4,
-                26.7, 23.2, 20.1, 17.6, 15.9,
-                18.3, 21.7, 24.9, 27.2, 23.8,
-                20.4, 17.9, 15.2, 18.6, 22.1,
-                25.3, 28.7, 31.4, 27.8, 24.1,
-                21.6, 19.3, 16.8, 20.2, 23.5,
-                26.9, 24.4, 21.7, 19.1, 16.4,
-                18.9, 22.3, 25.7, 29.2, 32.5,
-                28.8, 25.1, 22.4, 19.7, 17.1,
-                20.4, 23.7, 27.1, 30.4, 33.8,
-                30.1, 26.4, 23.7, 21.0, 18.3,
-                16.9, 20.2, 23.5, 26.8, 30.1
-            ], index=dates)
+            'margin_debt': pd.Series(margin_debt_values, index=dates, dtype='int64'),
+            'sp500_market_cap': pd.Series(sp500_market_cap_values, index=dates, dtype='int64'),
+            'm2_supply': pd.Series(m2_supply_values, index=dates, dtype='float64'),
+            'vix_data': pd.Series(vix_values, index=dates, dtype='float64')
         }
+
+    @staticmethod
+    def generate_scenario_data(
+        scenario: str = "bull_market",
+        periods: int = 48,
+        seed: Optional[int] = None,
+        stress_factors: Optional[Dict[str, float]] = None
+    ) -> Dict[str, pd.Series]:
+        """生成特定市场场景的数据"""
+        if seed:
+            np.random.seed(seed)
+
+        # 场景配置
+        scenarios = {
+            'bull_market': {
+                'margin_debt_trend': 0.08,
+                'margin_debt_volatility': 0.06,
+                'market_cap_trend': 0.10,
+                'market_cap_volatility': 0.08,
+                'm2_trend': 0.02,
+                'vix_base': 15.0,
+                'vix_volatility': 3.0
+            },
+            'bear_market': {
+                'margin_debt_trend': -0.03,
+                'margin_debt_volatility': 0.15,
+                'market_cap_trend': -0.08,
+                'market_cap_volatility': 0.12,
+                'm2_trend': 0.01,
+                'vix_base': 35.0,
+                'vix_volatility': 8.0
+            },
+            'crisis': {
+                'margin_debt_trend': -0.15,
+                'margin_debt_volatility': 0.25,
+                'market_cap_trend': -0.20,
+                'market_cap_volatility': 0.20,
+                'm2_trend': 0.005,
+                'vix_base': 50.0,
+                'vix_volatility': 15.0
+            },
+            'zero_growth': {
+                'margin_debt_trend': 0.001,
+                'margin_debt_volatility': 0.03,
+                'market_cap_trend': 0.002,
+                'market_cap_volatility': 0.02,
+                'm2_trend': 0.008,
+                'vix_base': 20.0,
+                'vix_volatility': 2.0
+            }
+        }
+
+        if scenario not in scenarios:
+            scenario = 'bull_market'
+
+        config = scenarios[scenario]
+
+        # 应用压力因子
+        if stress_factors:
+            config.update(stress_factors)
+
+        return MockDataGenerator.generate_calculation_data(
+            periods=periods,
+            seed=seed,
+            volatility=config['margin_debt_volatility'],
+            trend=config['margin_debt_trend']
+        )
+
+    @staticmethod
+    def validate_financial_data(data: Dict[str, pd.Series]) -> Dict[str, bool]:
+        """验证金融数据的合理性"""
+        validation_results = {}
+
+        # 验证杠杆率合理性 (1%-5%范围)
+        if 'margin_debt' in data and 'sp500_market_cap' in data:
+            leverage_ratios = data['margin_debt'] / data['sp500_market_cap']
+            valid_leverage_range = (leverage_ratios >= 0.01) & (leverage_ratios <= 0.05)
+            validation_results['leverage_ratio_reasonable'] = valid_leverage_range.all()
+            validation_results['leverage_ratio_mean'] = float(leverage_ratios.mean())
+            validation_results['leverage_ratio_range'] = {
+                'min': float(leverage_ratios.min()),
+                'max': float(leverage_ratios.max())
+            }
+
+        # 验证数据相关性 (融资债务与M2供应量正相关)
+        if 'margin_debt' in data and 'm2_supply' in data:
+            correlation = data['margin_debt'].corr(data['m2_supply'])
+            validation_results['margin_m2_correlation'] = float(correlation)
+            validation_results['positive_correlation'] = correlation > 0.5
+
+        # 验证季节性模式
+        if 'margin_debt' in data and len(data['margin_debt']) >= 24:
+            # 检查是否存在年度季节性
+            monthly_debt = data['margin_debt'].groupby(data['margin_debt'].index.month).mean()
+            seasonality_strength = monthly_debt.std() / monthly_debt.mean()
+            validation_results['seasonality_present'] = seasonality_strength > 0.05
+            validation_results['seasonality_strength'] = float(seasonality_strength)
+
+        return validation_results
 
     @staticmethod
     def generate_boundary_test_data() -> Dict[str, Any]:

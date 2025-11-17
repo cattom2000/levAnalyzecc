@@ -1,0 +1,65 @@
+# 性能基准数据
+
+# 历史性能基准
+historical_baselines:
+  leverage_calculator:
+    v1.0.0:
+      data_size_100:
+        avg_time: 0.001  # 秒
+        avg_memory: 1048576  # 1MB
+        throughput: 100000  # 数据点/秒
+      data_size_1000:
+        avg_time: 0.005
+        avg_memory: 2097152  # 2MB
+        throughput: 200000
+      data_size_10000:
+        avg_time: 0.05
+        avg_memory: 10485760  # 10MB
+        throughput: 200000
+
+  data_collector:
+    v1.0.0:
+      sp500_collector:
+        avg_time: 2.0  # 秒
+        avg_memory: 52428800  # 50MB
+      finra_collector:
+        avg_time: 1.5
+        avg_memory: 31457280  # 30MB
+      fred_collector:
+        avg_time: 1.0
+        avg_memory: 20971520  # 20MB
+
+  signal_generator:
+    v1.0.0:
+      small_dataset:  # 100数据点
+        avg_time: 0.1
+        avg_memory: 10485760  # 10MB
+        signal_count: 5
+      medium_dataset:  # 1000数据点
+        avg_time: 0.5
+        avg_memory: 20971520  # 20MB
+        signal_count: 5
+      large_dataset:  # 10000数据点
+        avg_time: 1.5
+        avg_memory: 52428800  # 50MB
+        signal_count: 5
+
+# 性能回归阈值
+regression_thresholds:
+  time: 0.2  # 20%性能下降
+  memory: 0.3  # 30%内存增长
+  throughput: 0.15  # 15%吞吐量下降
+
+# 性能目标
+performance_targets:
+  leverage_calculator:
+    target_throughput: 50000  # 数据点/秒
+    target_memory_efficiency: 100  # 数据点/MB
+
+  data_collector:
+    target_success_rate: 0.95  # 95%成功率
+    target_response_time: 3.0  # 秒
+
+  signal_generator:
+    target_latency: 1.0  # 秒
+    target_memory_usage: 100MB

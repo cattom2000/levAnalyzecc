@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import asyncio
+import aiohttp
 from datetime import datetime, date, timedelta
 from typing import Dict, Any, Optional, List, Tuple
 import warnings
@@ -49,6 +50,52 @@ class SP500Collector(APIDataSource, IFinancialDataProvider):
 
         # 抑制yfinance的警告
         warnings.filterwarnings("ignore", category=FutureWarning, module="yfinance")
+
+    async def make_request(self, endpoint: str, params: Dict[str, Any] = None) -> Any:
+        """
+        实现HTTP请求逻辑
+
+        Args:
+            endpoint: API端点
+            params: 请求参数
+
+        Returns:
+            Any: 响应数据
+        """
+        if params is None:
+            params = {}
+
+        url = f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url,
+                    params=params,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout)
+                ) as response:
+                    response.raise_for_status()
+
+                    # 根据内容类型返回相应格式的数据
+                    content_type = response.headers.get('Content-Type', '')
+
+                    if 'application/json' in content_type:
+                        return await response.json()
+                    elif 'text/html' in content_type:
+                        return await response.text()
+                    else:
+                        # 对于yfinance，我们通常使用自定义处理
+                        return await response.text()
+
+        except aiohttp.ClientError as e:
+            self.logger.error(f"HTTP请求失败: {url}, 错误: {e}")
+            raise DataSourceError(f"API请求失败: {e}", source_id=self.source_id)
+        except asyncio.TimeoutError:
+            self.logger.error(f"请求超时: {url}")
+            raise DataSourceError(f"请求超时: {url}", source_id=self.source_id)
+        except Exception as e:
+            self.logger.error(f"未知错误: {e}")
+            raise DataSourceError(f"未知错误: {e}", source_id=self.source_id)
 
     @handle_errors(ErrorCategory.DATA_SOURCE)
     async def fetch_data(self, query: DataQuery) -> DataResult:

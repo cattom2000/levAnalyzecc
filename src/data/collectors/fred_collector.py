@@ -10,11 +10,18 @@ from typing import Dict, Any, Optional, List, Tuple
 import asyncio
 import requests
 import time
+import aiohttp
 
 from src.contracts.data_sources import (
+    APIDataSource,
     IFinancialDataProvider,
     DataSourceType,
     APIRateLimitError,
+    DataResult,
+    DataQuery,
+    DataSourceInfo,
+    DataFrequency,
+    DataValidationError,
 )
 from src.utils.logging import get_logger, handle_errors, ErrorCategory
 from src.utils.settings import get_settings
@@ -23,12 +30,14 @@ from src.utils.settings import get_settings
 class DataValidationResult:
     """数据验证结果"""
 
-    def __init__(self, is_valid: bool, errors: List[str] = None):
+    def __init__(self, is_valid: bool, errors: List[str] = None, error_message: str = None, metadata: Dict[str, Any] = None):
         self.is_valid = is_valid
         self.errors = errors or []
+        self.error_message = error_message
+        self.metadata = metadata or {}
 
 
-class FREDCollector(IFinancialDataProvider):
+class FREDCollector(APIDataSource, IFinancialDataProvider):
     """FRED经济数据收集器"""
 
     def __init__(self, api_key: Optional[str] = None):
@@ -37,11 +46,14 @@ class FREDCollector(IFinancialDataProvider):
 
         # FRED API配置
         self.api_key = api_key or self.settings.data_sources.fred_api_key
-        self.base_url = "https://api.stlouisfed.org/fred"
 
-        # 数据源配置
-        self.source_type = DataSourceType.API
-        self.source_id = "fred_economic_data"
+        # 调用父类构造函数
+        super().__init__(
+            source_id="fred_economic_data",
+            name="FRED Economic Data",
+            base_url="https://api.stlouisfed.org/fred",
+            timeout=30,
+        )
 
         # 缓存和限流
         self._cache: Dict[str, Any] = {}
@@ -62,53 +74,81 @@ class FREDCollector(IFinancialDataProvider):
             "VIXCLS": "VIX波动率指数",  # VIX Closing Price
         }
 
-    @property
-    def source_id(self) -> str:
-        return self._source_id
-
-    @source_id.setter
-    def source_id(self, value: str):
-        self._source_id = value
-
-    @property
-    def source_type(self) -> DataSourceType:
-        return self._source_type
-
-    @source_type.setter
-    def source_type(self, value: DataSourceType):
-        self._source_type = value
-
-    @handle_errors(ErrorCategory.DATA_FETCH)
-    async def fetch_data(
-        self,
-        series_ids: Optional[List[str]] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> Optional[pd.DataFrame]:
+    async def make_request(self, endpoint: str, params: Dict[str, Any] = None) -> Any:
         """
-        获取FRED数据
+        实现FRED API请求逻辑
 
         Args:
-            series_ids: FRED系列ID列表，默认获取M2数据
-            start_date: 开始日期
-            end_date: 结束日期
+            endpoint: API端点
+            params: 请求参数
 
         Returns:
-            包含经济数据的DataFrame
+            Any: API响应数据
+        """
+        if params is None:
+            params = {}
+
+        # 添加API密钥
+        params['api_key'] = self.api_key
+        params['file_type'] = 'json'
+
+        url = f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+
+        try:
+            # API限流控制
+            current_time = time.time()
+            time_since_last = current_time - self._last_request_time
+            if time_since_last < self._rate_limit_delay:
+                await asyncio.sleep(self._rate_limit_delay - time_since_last)
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url,
+                    params=params,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout)
+                ) as response:
+                    response.raise_for_status()
+                    self._last_request_time = time.time()
+
+                    data = await response.json()
+                    return data
+
+        except Exception as e:
+            self.logger.error(f"FRED API请求失败: {url}, 错误: {e}")
+            raise DataValidationError(f"FRED API请求失败: {e}", source_id=self.source_id)
+
+    def fetch_data(self, query: DataQuery) -> DataResult:
+        """
+        同步版本的fetch_data，用于兼容测试
+
+        Args:
+            query: 数据查询参数
+
+        Returns:
+            DataResult: 查询结果
+        """
+        return asyncio.run(self.fetch_data_async(query))
+
+    async def fetch_data_async(self, query: DataQuery) -> DataResult:
+        """
+        异步获取FRED数据
+
+        Args:
+            query: 数据查询参数
+
+        Returns:
+            DataResult: 包含FRED数据的结果
         """
         try:
             if not self.api_key:
                 raise ValueError("FRED API密钥未配置，请在settings中设置fred_api_key")
 
-            # 默认获取M2货币供应量数据
-            if series_ids is None:
-                series_ids = ["M2SL"]
+            # 从查询中获取系列ID
+            series_ids = query.symbols or ["M2SL"]
 
             # 设置默认日期范围
-            if end_date is None:
-                end_date = date.today()
-            if start_date is None:
-                start_date = date(2000, 1, 1)  # 默认从2000年开始
+            start_date = query.start_date or date(2000, 1, 1)
+            end_date = query.end_date or date.today()
 
             self.logger.info(
                 f"开始获取FRED数据",
@@ -129,21 +169,75 @@ class FREDCollector(IFinancialDataProvider):
             merged_data = self._merge_series_data(series_ids, results)
 
             if merged_data is not None and not merged_data.empty:
-                self.logger.info(
-                    f"FRED数据获取成功",
-                    records=len(merged_data),
-                    columns=list(merged_data.columns),
-                    date_range=f"{merged_data.index.min()} 到 {merged_data.index.max()}",
+                # 生成结果元数据
+                metadata = {
+                    "source": "FRED",
+                    "description": "联邦储备经济数据",
+                    "coverage_start": merged_data.index.min(),
+                    "coverage_end": merged_data.index.max(),
+                    "total_records": len(merged_data),
+                    "series_ids": series_ids,
+                }
+
+                # 数据验证
+                validation = self.validate_data(merged_data)
+                if not validation.is_valid:
+                    self.logger.warning(f"FRED数据质量问题: {validation.error_message}")
+
+                result = DataResult(
+                    data=merged_data,
+                    source_info=self.get_info(),
+                    query=query,
+                    metadata=metadata,
+                    quality_score=0.9 if validation.is_valid else 0.7,
                 )
-                return merged_data
+
+                self.logger.info(f"FRED数据获取成功", records=len(merged_data))
+                return result
             else:
                 self.logger.warning("获取的FRED数据为空")
-                return None
+                return DataResult(
+                    data=pd.DataFrame(),
+                    source_info=self.get_info(),
+                    query=query,
+                    metadata={"error": "没有获取到有效数据"},
+                    quality_score=0.0,
+                )
 
         except Exception as e:
             self.logger.error(f"获取FRED数据失败: {e}")
             raise
 
+    def validate_query(self, query: DataQuery) -> bool:
+        """验证查询参数"""
+        try:
+            # 检查日期范围
+            if query.start_date > query.end_date:
+                return False
+
+            # 检查API密钥
+            if not self.api_key:
+                return False
+
+            return True
+
+        except Exception:
+            return False
+
+    def _initialize_info(self) -> DataSourceInfo:
+        """初始化FRED数据源信息"""
+        return DataSourceInfo(
+            source_id=self.source_id,
+            name=self.name,
+            type=self.source_type,
+            frequency=DataFrequency.MONTHLY,
+            description="FRED经济数据 - 联邦储备经济数据库",
+            reliability_score=0.95,  # 官方数据，可靠性高
+            coverage_start=date(1950, 1, 1),  # FRED历史起始
+            coverage_end=date.today(),
+        )
+
+    
     async def _fetch_series_data(
         self, series_id: str, start_date: date, end_date: date
     ) -> pd.DataFrame:

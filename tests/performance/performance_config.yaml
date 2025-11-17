@@ -1,0 +1,62 @@
+# 性能测试配置文件
+
+performance_benchmarks:
+  # 基准测试参数
+  baseline:
+    data_sizes: [100, 1000, 10000, 50000]
+    concurrency_levels: [1, 5, 10, 20]
+    iterations: 5  # 每个测试重复次数
+
+  # 性能阈值
+  thresholds:
+    leverage_calculator:
+      max_time: 1.0  # 秒
+      max_memory: 52428800  # 50MB
+      min_throughput: 1000  # 数据点/秒
+
+    data_collector:
+      max_time: 5.0  # 秒
+      max_memory: 104857600  # 100MB
+
+    signal_generator:
+      max_time: 2.0  # 秒
+      max_memory: 104857600  # 100MB
+      min_throughput: 500  # 信号/秒
+
+  # 回归检测
+  regression:
+    time_regression_threshold: 0.2  # 20%性能下降视为回归
+    memory_regression_threshold: 0.3  # 30%内存增长视为回归
+    confidence_level: 0.95
+
+  # 并发测试
+  concurrency:
+    thread_pool_sizes: [1, 2, 4, 8, 16]
+    process_pool_sizes: [1, 2, 4]
+    max_workers: 20
+
+  # 内存测试
+  memory:
+    leak_threshold: 52428800  # 50MB内存增长视为泄漏
+    gc_frequency: 10  # 每10次操作执行一次垃圾回收
+    peak_memory_limit: 1073741824  # 1GB峰值内存限制
+
+  # I/O测试
+  io:
+    csv_write_limit: 1.0  # 秒
+    csv_read_limit: 0.5  # 秒
+    test_data_size: 10000  # 行数
+
+# 性能报告配置
+reporting:
+  output_dir: "reports/performance"
+  formats: ["html", "json", "csv"]
+  include_charts: true
+  trend_analysis: true
+
+# 监控配置
+monitoring:
+  cpu_sampling_interval: 0.1  # 秒
+  memory_sampling_interval: 0.1  # 秒
+  disk_io_monitoring: true
+  network_io_monitoring: false
