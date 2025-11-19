@@ -1,0 +1,30 @@
+[run]
+source = src
+omit =
+    */tests/*
+    */venv/*
+    */__pycache__/*
+    */migrations/*
+    */conftest.py
+    setup.py
+branch = True
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    class .*\(Protocol\):
+    @(abc\.)?abstractmethod
+    if TYPE_CHECKING:
+show_missing = True
+precision = 2
+
+[html]
+directory = htmlcov
+title = levAnalyzecc Coverage Report
+
+[xml]
+output = coverage.xml
